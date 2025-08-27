@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # SF2527 Numerical Methods for Differential Equations I
-# Computer Exercise 1, Part 1
+# Computer Exercise 1, Part 1-a
 #
 # Author: Alessio / Tim
 # Date: 26 August 2025
