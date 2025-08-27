@@ -25,8 +25,8 @@ def RK_step(u: np.ndarray, a: np.ndarray, h: float) -> np.ndarray:
 
 
 def integrate(u0: np.ndarray, a: np.ndarray, h: float, Tsteps: int) -> np.ndarray:
-    u = np.zeros((u0.shape[0], Tsteps))
-    for k in range(Tsteps):
+    u = np.zeros((u0.shape[0], Tsteps + 1))
+    for k in range(Tsteps + 1):
         if k == 0:
             u[:, k] = u0
         else:
@@ -81,7 +81,7 @@ for Tstep in Tsteps:
         deltas.append(delta)
 
 plt.loglog(h_vals[:-1], deltas, marker='o', label='Deltas')
-plt.loglog(h_vals, h_vals, linestyle='--', label='$O(h)$')
+plt.loglog(h_vals, [h_val**3 for h_val in h_vals], linestyle='--', label='$O(h)$')
 plt.xlabel('$h$')
 plt.ylabel('$|m_N(T) - m_{2N}(T)|$')
 plt.title('Order of Accuracy')
