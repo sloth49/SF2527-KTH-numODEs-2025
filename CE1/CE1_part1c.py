@@ -59,21 +59,22 @@ def plot_trajectory(m: np.ndarray, a: np.ndarray) -> None:
 
 
 def assembleA(a: np.ndarray) -> np.ndarray:
+    a1, a2, a3 = a
     A = np.array([
         [
-            -ALPHA * (a[1]**2 + a[2]**2),
-            ALPHA * a[0] * a[1] - a[2],
-            ALPHA* a[0] * a[2] + a[1]
+            -ALPHA * (a2**2 + a3**2),
+            ALPHA * a1 * a2 - a3,
+            ALPHA* a1 * a3 + a2
         ],
         [
-            ALPHA * a[0] * a[1] + a[2],
-            -ALPHA * (a[0]**2 + a[2]**2),
-            ALPHA * a[1] * a[2] - a[0]
+            ALPHA * a1 * a2 + a3,
+            -ALPHA * (a1**2 + a3**2),
+            ALPHA * a2 * a3 - a1
         ],
         [
-            ALPHA * a[0] * a[2] - a[1],
-            ALPHA * a[1] * a[2] + a[0],
-            -ALPHA * (a[0]**2 + a[1]**2)
+            ALPHA * a1 * a3 - a2,
+            ALPHA * a2 * a3 + a1,
+            -ALPHA * (a1**2 + a2**2)
         ]
     ])
     return A
@@ -82,8 +83,60 @@ def assembleA(a: np.ndarray) -> np.ndarray:
 # Compute eigenvalues of A
 def eigvalsA(a: np.ndarray) -> np.ndarray:
     A = assembleA(a)
-    eigvals = np.linalg.eigvals(A)
-    return eigvals
+    return np.linalg.eigvals(A)
+
+
+# Define the function |R(z=x+iy)| - 1
+def stability_boundary(x, y):
+    z = x + 1j * y  # Convert to complex number
+    return np.abs(1 + z + (1/2) * z**2 + (1/6) * z**3) - 1
+
+
+def plot_stability_region():
+    x = np.linspace(-4, 2, 400)
+    y = np.linspace(-4, 4, 400)
+    X, Y = np.meshgrid(x, y)
+    Z = stability_boundary(X, Y)
+
+    plt.figure(figsize=(6, 6))
+    plt.contourf(X, Y, Z, levels=[-1, 0], colors=['lightblue'])  # Fill interior region
+    plt.contour(X, Y, Z, levels=[0], colors='b')  # Boundary contour
+    plt.axhline(0, color='black', linewidth=0.5)
+    plt.axvline(0, color='black', linewidth=0.5)
+    plt.grid(True, linestyle='--', linewidth=0.5)
+    plt.xlabel("Re(z)")
+    plt.ylabel("Im(z)")
+    plt.title("Stability Region of the RK Method")
+    plt.axis('equal')
+
+    # Add markers for the two complex eigenvalues of A
+    for eigval in eigvals:
+        if np.imag(eigval) != 0:
+            plt.plot(np.real(eigval), np.imag(eigval), 'ro', markersize=8, label='Eigenvalue')
+            # Scale the eigenvalue by a large factor to draw the line
+            multiplier = 4
+            plt.plot(
+                [0, np.real(eigval) * multiplier],
+                [0, np.imag(eigval) * multiplier],
+                'r--', linewidth=1)
+    plt.show()
+
+
+def h_absolute_stability(eigvals: np.ndarray) -> float:
+    h_values = []
+    for eigval in eigvals:
+        x, y = np.real(eigval), np.imag(eigval)
+        if y != 0:
+            # Solve for h such that (h*x, h*y) is on the stability boundary
+            def objective(h):
+                return stability_boundary(h * x, h * y)
+            from scipy.optimize import bisect
+            try:
+                h_root = bisect(f=objective, a=0, b=10, xtol=1e-5)
+                h_values.append(h_root)
+            except ValueError:
+                pass  # handle case where no root is found
+    return min(h_values)
 
 # -------------------------------- Main --------------------------------------
 
@@ -93,3 +146,8 @@ m0 = np.array([0, 0, 1])
 
 eigvals = eigvalsA(a)
 print("Eigenvalues of A:\n", eigvals)
+
+plot_stability_region()
+
+h0 = h_absolute_stability(eigvals)
+print(f"Maximum absolute stable step size h: {h0}")
