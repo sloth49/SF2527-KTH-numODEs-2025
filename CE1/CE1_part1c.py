@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # SF2527 Numerical Methods for Differential Equations I
-# Computer Exercise 1, Part 1-b
+# Computer Exercise 1, Part 1-c
 #
 # Author: Alessio / Tim
 # Date: 26 August 2025
@@ -10,9 +10,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+ALPHA = 0.07
+
 # RHS of the ODE
 def f_rhs(u: np.ndarray, a: np.ndarray) -> np.ndarray:
-    ALPHA = 0.07
     return np.cross(a, u) + ALPHA * np.cross(a, np.cross(a, u))
 
 
@@ -57,34 +58,38 @@ def plot_trajectory(m: np.ndarray, a: np.ndarray) -> None:
     plt.show()
 
 
+def assembleA(a: np.ndarray) -> np.ndarray:
+    A = np.array([
+        [
+            -ALPHA * (a[1]**2 + a[2]**2),
+            ALPHA * a[0] * a[1] - a[2],
+            ALPHA* a[0] * a[2] + a[1]
+        ],
+        [
+            ALPHA * a[0] * a[1] + a[2],
+            -ALPHA * (a[0]**2 + a[2]**2),
+            ALPHA * a[1] * a[2] - a[0]
+        ],
+        [
+            ALPHA * a[0] * a[2] - a[1],
+            ALPHA * a[1] * a[2] + a[0],
+            -ALPHA * (a[0]**2 + a[1]**2)
+        ]
+    ])
+    return A
+
+
+# Compute eigenvalues of A
+def eigvalsA(a: np.ndarray) -> np.ndarray:
+    A = assembleA(a)
+    eigvals = np.linalg.eigvals(A)
+    return eigvals
+
 # -------------------------------- Main --------------------------------------
 
 # Initial data / setup
 a = 0.25 * np.array([1, np.sqrt(11), 2])
 m0 = np.array([0, 0, 1])
 
-Tf = 50
-Tsteps = [50, 100, 200, 400, 800, 1600]
-
-# Determine order of accuracy - See 'Notes on Order of Accuracy' section 3
-mn_vals = []
-h_vals = []
-deltas = []
- 
-for Tstep in Tsteps:
-    h = Tf / Tstep
-    h_vals.append(h)
-    m = integrate(m0, a, h, Tstep)
-    mn_vals.append(m[:, -1])
-    if Tstep != Tsteps[0]:
-        delta = np.linalg.norm(mn_vals[-1] - mn_vals[-2])
-        deltas.append(delta)
-
-plt.loglog(h_vals[:-1], deltas, marker='o', label='Deltas')
-plt.loglog(h_vals, [7e-2 * h_val**3 for h_val in h_vals] , linestyle='--', label='$O(h^3)$')
-plt.xlabel('$h$')
-plt.ylabel('$|m_N(T) - m_{2N}(T)|$')
-plt.title('Order of Accuracy')
-plt.legend()
-plt.grid()
-plt.show()
+eigvals = eigvalsA(a)
+print("Eigenvalues of A:\n", eigvals)
