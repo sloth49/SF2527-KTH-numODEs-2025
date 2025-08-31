@@ -35,7 +35,9 @@ def integrate(u0: np.ndarray, a: np.ndarray, h: float, Tsteps: int) -> np.ndarra
     return u
 
 
-def plot_components(t: np.ndarray, m: np.ndarray) -> None:
+def plot_components(
+        t: np.ndarray, m: np.ndarray,
+        title: str='Magnetization components over time') -> None:
     plt.plot(t, m[0, :], label='m1')
     plt.plot(t, m[1, :], label='m2')
     plt.plot(t, m[2, :], label='m3')
@@ -43,18 +45,25 @@ def plot_components(t: np.ndarray, m: np.ndarray) -> None:
     plt.ylabel('m')
     plt.legend()   
     plt.grid() 
-    plt.title('Magnetization components over time')
+    plt.title(title)
     plt.show()
 
 
-def plot_trajectory(m: np.ndarray, a: np.ndarray) -> None:
+def plot_trajectory(
+        m: np.ndarray, a: np.ndarray,
+        title: str='Magnetisation vector trajectory') -> None:
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(m[0, :], m[1, :], m[2, :], label='Trajectory')
     ax.quiver(0, 0, 0, a[0], a[1], a[2], 
-              color='r', linewidth=2, label='$a$ vector')    
+              color='r', linewidth=2, label='$a$ vector',
+              arrow_length_ratio=0.1)
     ax.set_box_aspect([1,1,1])
+    ax.set_xlabel('$m_1$')
+    ax.set_ylabel('$m_2$')
+    ax.set_zlabel('$m_3$')
     ax.legend()
+    plt.title(title)
     plt.show()
 
 
@@ -119,7 +128,6 @@ def plot_stability_region(eigvals: np.ndarray) -> None:
                 [0, np.real(eigval) * multiplier],
                 [0, np.imag(eigval) * multiplier],
                 'r--', linewidth=1)
-    plt.legend()
     plt.show()
 
 
@@ -146,10 +154,17 @@ def h_absolute_stability(eigvals: np.ndarray) -> float:
 a = 0.25 * np.array([1, np.sqrt(11), 2])
 m0 = np.array([0, 0, 1])
 
-eigvals = eigvalsA(a)
-print("Eigenvalues of A:\n", eigvals)
-
-plot_stability_region(eigvals)
-
-h0 = h_absolute_stability(eigvals)
-print(h0)
+# Time integration
+Tf = 50
+Tsteps = [23, 27, 200]
+plot_titles_components = [f'Magnetisation components ($h$ = {Tf/Tstep:.2f})' for Tstep in Tsteps]
+plot_titles_trajectory = [f'Magnetisation trajectory ($h$ = {Tf/Tstep:.2f})' for Tstep in Tsteps]
+for Tstep, title_components, title_trajectory in zip(
+        Tsteps, plot_titles_components, plot_titles_trajectory):
+    # eigvals = eigvalsA(a)
+    t = np.linspace(start=0, stop=Tf, num=Tstep + 1)
+    h = t[1] - t[0]
+    print(f"Time step h = {h:.4f}")
+    m = integrate(m0, a, h, Tstep)
+    plot_components(t, m, title=title_components)
+    plot_trajectory(m, a, title=title_trajectory)
