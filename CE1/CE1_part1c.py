@@ -130,10 +130,11 @@ def h_absolute_stability(eigvals: np.ndarray) -> float:
             # Solve for h such that (h*x, h*y) is on the stability boundary
             def objective(h):
                 return stability_boundary(h * x, h * y)
-            from scipy.optimize import bisect
+            from scipy.optimize import fsolve
             try:
-                h_root = bisect(f=objective, a=0, b=10, xtol=1e-5)
-                h_values.append(h_root)
+                h_root = fsolve(func=objective, x0=3.0)[0]
+                if h_root > 0:  # avoid trivial root at h=0
+                    h_values.append(h_root)
             except ValueError:
                 pass  # handle case where no root is found
     return min(h_values)
@@ -150,4 +151,4 @@ print("Eigenvalues of A:\n", eigvals)
 plot_stability_region()
 
 h0 = h_absolute_stability(eigvals)
-print(f"Maximum absolute stable step size h: {h0}")
+print(h0)
