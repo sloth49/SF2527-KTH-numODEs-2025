@@ -10,6 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+test 
+
 # RHS of the ODE
 def f_rhs(u: np.ndarray, a: np.ndarray) -> np.ndarray:
     ALPHA = 0.07
@@ -38,8 +40,8 @@ def plot_components(t: np.ndarray, m: np.ndarray) -> None:
     plt.plot(t, m[0, :], label='m1')
     plt.plot(t, m[1, :], label='m2')
     plt.plot(t, m[2, :], label='m3')
-    plt.xlabel('$t$ [s]') 
-    plt.ylabel('$m$')
+    plt.xlabel('t') 
+    plt.ylabel('m')
     plt.legend()   
     plt.grid() 
     plt.title('Magnetization components over time')
@@ -51,12 +53,8 @@ def plot_trajectory(m: np.ndarray, a: np.ndarray) -> None:
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(m[0, :], m[1, :], m[2, :], label='Trajectory')
     ax.quiver(0, 0, 0, a[0], a[1], a[2], 
-              color='r', linewidth=2, label='$a$ vector',
-              arrow_length_ratio=0.1)
+              color='r', linewidth=2, label='$a$ vector')    
     ax.set_box_aspect([1,1,1])
-    ax.set_xlabel('$m_1$')
-    ax.set_ylabel('$m_2$')
-    ax.set_zlabel('$m_3$')
     ax.legend()
     plt.show()
 
