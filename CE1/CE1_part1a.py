@@ -10,8 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-test 
-
 # RHS of the ODE
 def f_rhs(u: np.ndarray, a: np.ndarray) -> np.ndarray:
     ALPHA = 0.07
