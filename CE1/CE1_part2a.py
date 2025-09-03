@@ -52,9 +52,6 @@ def integrate(f, u0, t_span, h):
     
     return t, u
 
-#Solve with RK method for t in [0, 10]
-print("Part 2a: Solving with RK method for t in [0, 10]")
-
 # Initial conditions
 u0 = np.array([1.0, 0.0, 0.0])
 t_span = (0, 10)
@@ -63,20 +60,21 @@ t_span = (0, 10)
 h_values = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3]
 stable_h = None
 
-for h in h_values:
-    try:
-        t, u = integrate(robertson_rhs, u0, t_span, h)
-        # Check if solution is stable (no NaN or extreme values)
-        if not np.any(np.isnan(u)) and np.all(np.abs(u) < 1e10): 
-            stable_h = h
-            print(f"Stable solution found with h = {h}")
-            break
-    except:
-        continue
+# for h in h_values:
+#     try:
+#         t, u = integrate(robertson_rhs, u0, t_span, h)
+#         # Check if solution is stable (no NaN or extreme values)
+#         if not np.any(np.isnan(u)) and np.all(np.abs(u) < 1e10): 
+#             stable_h = h
+#             print(f"Stable solution found with h = {h}")
+#             break
+#     except:
+#         continue
 
-if stable_h is None:
-    print("No stable solution found with tested step sizes")
-    stable_h = 1e-5  # Use smallest tested value
+# if stable_h is None:
+#     print("No stable solution found with tested step sizes")
+#     stable_h = 1e-5  # Use smallest tested value
+stable_h = 7.5e-4
 
 # Solve with stable step size
 t, u = integrate(robertson_rhs, u0, t_span, stable_h)
