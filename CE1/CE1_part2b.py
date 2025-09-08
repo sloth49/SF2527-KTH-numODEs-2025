@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # SF2527 Numerical Methods for Differential Equations I
-# Computer Exercise 1, Part 2-a
+# Computer Exercise 1, Part 2-b
 #
 # Author: Alessio / Tim
 # Date: 26 August 2025
@@ -23,6 +23,16 @@ def robertson_rhs(t,u):
     dxC_dt = r3 * xB ** 2
     return np.array([dxA_dt, dxB_dt, dxC_dt])
 
+# Jacobian matrix for Robertson's problem
+def robertson_jacobian(t, u):
+    xA, xB, xC = u
+    J = np.array([
+        [-r1, r2 * xC, r2 * xB],
+        [r1, -r2 * xC - 2 * r3 * xB, -r2 * xB],
+        [0, 2 * r3 * xB, 0]
+    ])
+    return J
+
 # Runge-Kutta method from Part 1
 def RK_step(f, u, t, h):
     k1 = f(t, u)
@@ -42,9 +52,6 @@ def integrate(f, u0, t_span, h):
     
     return t, u
 
-#Solve with RK method for t in [0, 10]
-print("Part 2a: Solving with RK method for t in [0, 10]")
-
 # Initial conditions
 u0 = np.array([1.0, 0.0, 0.0])
 t_span = (0, 10)
@@ -59,42 +66,57 @@ for h in h_values:
         # Check if solution is stable (no NaN or extreme values)
         if not np.any(np.isnan(u)) and np.all(np.abs(u) < 1e10): 
             stable_h = h
-            print(f"Stable solution found with h = {h}")
             break
     except:
         continue
 
 if stable_h is None:
-    print("No stable solution found with tested step sizes")
     stable_h = 1e-5  # Use smallest tested value
 
 # Solve with stable step size
 t, u = integrate(robertson_rhs, u0, t_span, stable_h)
 xA, xB, xC = u
 
-# Plot solutions
+eigenvalues_real = []
+eigenvalues_imag = []
+
+for i in range(len(t)):
+    J = robertson_jacobian(t[i], u[:, i])
+    eigvals = np.linalg.eigvals(J)
+    
+    # Store only the two non-zero eigenvalues
+    non_zero_eigvals = eigvals[np.abs(eigvals) > 1e-10]
+    if len(non_zero_eigvals) >= 2:
+        eigenvalues_real.append(np.real(non_zero_eigvals[:2]))
+        eigenvalues_imag.append(np.imag(non_zero_eigvals[:2]))
+    else:
+        eigenvalues_real.append([0, 0])
+        eigenvalues_imag.append([0, 0])
+
+eigenvalues_real = np.array(eigenvalues_real)
+eigenvalues_imag = np.array(eigenvalues_imag)
+
+# Plot eigenvalues
 plt.figure(figsize=(12, 5))
 
 plt.subplot(1, 2, 1)
-plt.plot(t, xA, label='$x_A$')
-plt.plot(t, xB, label='$x_B$')
-plt.plot(t, xC, label='$x_C$')
+plt.plot(t, eigenvalues_real[:, 0], label='Real part of λ_1')
+plt.plot(t, eigenvalues_real[:, 1], label='Real part of λ_2')
 plt.xlabel('t')
-plt.ylabel('Concentration')
-plt.title('Robertson Problem - Linear Scale')
+plt.ylabel('Real part')
+plt.title('Real Parts of Eigenvalues')
 plt.legend()
-plt.grid()
+plt.grid(True)
 
 plt.subplot(1, 2, 2)
-plt.semilogy(t, xA, label='$x_A$')
-plt.semilogy(t, xB, label='$x_B$')
-plt.semilogy(t, xC, label='$x_C$')
+plt.plot(t, np.abs(eigenvalues_real[:, 0]), label='|Real part of λ_1|')
+plt.plot(t, np.abs(eigenvalues_real[:, 1]), label='|Real part of λ_2|')
 plt.xlabel('t')
-plt.ylabel('Concentration (log scale)')
-plt.title('Robertson Problem - Log Scale')
+plt.ylabel('Absolute value of real part')
+plt.title('Absolute Values of Real Parts')
 plt.legend()
-plt.grid()
+plt.grid(True)
+plt.yscale('log')
 
+plt.tight_layout()
 plt.show()
-
-print(f"Empirically found stable step size: h = {stable_h}")
