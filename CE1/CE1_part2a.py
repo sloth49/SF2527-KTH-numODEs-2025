@@ -68,6 +68,8 @@ if stable_h is None:
     print("No stable solution found with tested step sizes")
     stable_h = 1e-5  # Use smallest tested value
 
+stable_h = 7.5e-4
+
 # Solve with stable step size
 t, u = integrate(robertson_rhs, u0, t_span, stable_h)
 xA, xB, xC = u

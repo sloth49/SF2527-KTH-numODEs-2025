@@ -46,77 +46,77 @@ def integrate(f, u0, t_span, h):
     t = np.linspace(t0, tf, n_steps + 1)
     u = np.zeros((len(u0), n_steps + 1))
     u[:, 0] = u0
+
+    jac_eigvals = np.zeros((len(u0), n_steps + 1), dtype=complex)
+    jac_eigvals[:, 0] = np.linalg.eigvals(robertson_jacobian(t0, u0))
     
     for i in range(n_steps):
         u[:, i+1] = RK_step(f, u[:, i], t[i], h)
+        jac = robertson_jacobian(t[i], u[:, i+1])
+        jac_eigvals[:, i+1] = np.linalg.eigvals(jac)
     
-    return t, u
+    return t, u, jac_eigvals
+
 
 # Initial conditions
 u0 = np.array([1.0, 0.0, 0.0])
 t_span = (0, 10)
 
-# Find stable step size empirically
-h_values = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3]
-stable_h = None
+stable_h = 7.5e-4
 
-for h in h_values:
-    try:
-        t, u = integrate(robertson_rhs, u0, t_span, h)
-        # Check if solution is stable (no NaN or extreme values)
-        if not np.any(np.isnan(u)) and np.all(np.abs(u) < 1e10): 
-            stable_h = h
-            break
-    except:
-        continue
+t, u, jac_eigvals = integrate(robertson_rhs, u0, t_span, stable_h)
 
-if stable_h is None:
-    stable_h = 1e-5  # Use smallest tested value
+eigvals_real = jac_eigvals.real.flatten()
+eigvals_imag = jac_eigvals.imag.flatten()
 
-# Solve with stable step size
-t, u = integrate(robertson_rhs, u0, t_span, stable_h)
-xA, xB, xC = u
+plt.figure(figsize=(10, 6))
+plt.scatter(eigvals_real, eigvals_imag, s=4)
+plt.xlabel('Re(λ)')
+plt.ylabel('Im(λ)')
+plt.title('Jacobian Eigenvalues in the Complex Plane')
+plt.grid()
+plt.show()
 
-eigenvalues_real = []
-eigenvalues_imag = []
-
+non_zero_eigvals = np.zeros((2, len(t)), dtype=complex)
 for i in range(len(t)):
-    J = robertson_jacobian(t[i], u[:, i])
-    eigvals = np.linalg.eigvals(J)
-    
-    # Store only the two non-zero eigenvalues
-    non_zero_eigvals = eigvals[np.abs(eigvals) > 1e-10]
-    if len(non_zero_eigvals) >= 2:
-        eigenvalues_real.append(np.real(non_zero_eigvals[:2]))
-        eigenvalues_imag.append(np.imag(non_zero_eigvals[:2]))
-    else:
-        eigenvalues_real.append([0, 0])
-        eigenvalues_imag.append([0, 0])
+    eigvals = jac_eigvals[:, i]
+    # Sort by absolute value and take the two largest
+    sorted_indices = np.argsort(np.abs(eigvals))[::-1]
+    non_zero_eigvals[:, i] = eigvals[sorted_indices[:2]]
 
-eigenvalues_real = np.array(eigenvalues_real)
-eigenvalues_imag = np.array(eigenvalues_imag)
+# Plot the real and imaginary parts of the non-zero eigenvalues over time
+plt.figure(figsize=(12, 8))
 
-# Plot eigenvalues
-plt.figure(figsize=(12, 5))
-
-plt.subplot(1, 2, 1)
-plt.plot(t, eigenvalues_real[:, 0], label='Real part of λ_1')
-plt.plot(t, eigenvalues_real[:, 1], label='Real part of λ_2')
-plt.xlabel('t')
-plt.ylabel('Real part')
-plt.title('Real Parts of Eigenvalues')
+plt.subplot(2, 1, 1)
+plt.plot(t, non_zero_eigvals[0, :].real, label='Largest eigenvalue (real)')
+plt.plot(t, non_zero_eigvals[1, :].real, label='Second largest eigenvalue (real)')
+plt.xlabel('Time t')
+plt.ylabel('Re(λ)')
 plt.legend()
-plt.grid(True)
+plt.grid()
+plt.title('Real Parts of Non-Zero Jacobian Eigenvalues vs Time')
 
-plt.subplot(1, 2, 2)
-plt.plot(t, np.abs(eigenvalues_real[:, 0]), label='|Real part of λ_1|')
-plt.plot(t, np.abs(eigenvalues_real[:, 1]), label='|Real part of λ_2|')
-plt.xlabel('t')
-plt.ylabel('Absolute value of real part')
-plt.title('Absolute Values of Real Parts')
+plt.subplot(2, 1, 2)
+plt.plot(t, non_zero_eigvals[0, :].imag, label='Largest eigenvalue (imag)')
+plt.plot(t, non_zero_eigvals[1, :].imag, label='Second largest eigenvalue (imag)')
+plt.xlabel('Time t')
+plt.ylabel('Im(λ)')
 plt.legend()
-plt.grid(True)
-plt.yscale('log')
+plt.grid()
+plt.title('Imaginary Parts of Non-Zero Jacobian Eigenvalues vs Time')
 
 plt.tight_layout()
 plt.show()
+
+# Also, plot the magnitude of the largest eigenvalue over time
+plt.figure(figsize=(10, 6))
+largest_magnitude = np.abs(non_zero_eigvals[0, :])
+plt.plot(t, largest_magnitude, label='Magnitude of largest eigenvalue')
+plt.xlabel('Time t')
+plt.ylabel('|λ|')
+plt.yscale('log')  # Use log scale due to large range
+plt.grid()
+plt.title('Magnitude of Largest Eigenvalue vs Time')
+plt.legend()
+plt.show()
+
