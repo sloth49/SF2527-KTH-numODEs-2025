@@ -84,26 +84,40 @@ for i in range(len(t)):
     sorted_indices = np.argsort(np.abs(eigvals))[::-1]
     non_zero_eigvals[:, i] = eigvals[sorted_indices[:2]]
 
+#Test for some indices
+middle_indices = [len(t)//4, len(t)//2, 3*len(t)//4]
+for i in middle_indices:
+    eig1, eig2, eig3 = jac_eigvals[:, i]
+    print(f"{t[i]:.6f}\t{eig1:.6e}\t{eig2:.6e}\t{eig3:.6e}")
+
 # Plot the real and imaginary parts of the non-zero eigenvalues over time
 plt.figure(figsize=(12, 8))
 
 plt.subplot(2, 1, 1)
 plt.plot(t, non_zero_eigvals[0, :].real, label='Largest eigenvalue (real)')
+plt.xlabel('Time t')
+plt.ylabel('Re(λ)')
+plt.legend()
+plt.grid()
+plt.title('Real Parts of the largest eigenvalue vs Time')
+
+plt.subplot(2, 1, 2)
 plt.plot(t, non_zero_eigvals[1, :].real, label='Second largest eigenvalue (real)')
 plt.xlabel('Time t')
 plt.ylabel('Re(λ)')
 plt.legend()
 plt.grid()
-plt.title('Real Parts of Non-Zero Jacobian Eigenvalues vs Time')
+plt.title('Real Parts of second largest eigenvalue vs Time')
 
-plt.subplot(2, 1, 2)
-plt.plot(t, non_zero_eigvals[0, :].imag, label='Largest eigenvalue (imag)')
-plt.plot(t, non_zero_eigvals[1, :].imag, label='Second largest eigenvalue (imag)')
-plt.xlabel('Time t')
-plt.ylabel('Im(λ)')
-plt.legend()
-plt.grid()
-plt.title('Imaginary Parts of Non-Zero Jacobian Eigenvalues vs Time')
+#Plot of the imaginary part
+#plt.subplot(3, 1, 3)
+#plt.plot(t, non_zero_eigvals[0, :].imag, label='Largest eigenvalue (imag)')
+#plt.plot(t, non_zero_eigvals[1, :].imag, label='Second largest eigenvalue (imag)')
+#plt.ylabel('Im(λ)')
+#plt.xlabel('Time t')
+#plt.legend()
+#plt.title('Imaginary Parts of Non-Zero Jacobian Eigenvalues vs Time')
+#plt.grid()
 
 plt.tight_layout()
 plt.show()
