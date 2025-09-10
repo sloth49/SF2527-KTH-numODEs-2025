@@ -42,42 +42,40 @@ def RK_step(f, u, t, h):
     return u + (h / 6) * (k1 + k2 + 4 * k3)
 
 def integrate(f, u0, t_span, h):
-    t0, tf = t_span
-    n_steps = int((tf - t0) / h)
-    u = np.zeros((len(u0), n_steps + 1))
-    u[:, 0] = u0 
-    t = np.linspace(t0, tf, n_steps + 1)
+    t = 0
+    u = u0.copy()
+    n_steps = int(T / h)
+    
+    start_time = time.time()
     
     for i in range(n_steps):
-        u[:, i+1] = RK_step(f, u[:, i], t[i], h)
+        u = RK_step(f, u, t, h)
+        t += h
     
-    return t, u
-
+    end_time = time.time()
+    computation_time = end_time - start_time
+    
+    return u, computation_time
 
 # Initial conditions
 u0 = np.array([1.0, 0.0, 0.0])
-t_span = (0, 10)
+T = 50
 
-stable_h = 5e-6
+stable_h = 5e-7
 
-print(f"Solving Robertson's problem for t ∈ [0, 1000] with h = {stable_h}")
+print(f"Solving Robertson's problem for t ∈ [0, {T}] with h = {stable_h}")
 
-start_time = time.time()
-t, final_u = integrate(robertson_rhs, u0, t_span, stable_h) 
-end_time = time.time()
+final_u, comp_time = integrate(robertson_rhs, u0, 1000, stable_h)
 
-computation_time = end_time - start_time
-
-xA_final = final_u[0, -1]
-xB_final = final_u[1, -1]
-xC_final = final_u[2, -1]
-
+xA_final = final_u[0]
+xB_final = final_u[1]
+xC_final = final_u[2]
 
 print("\nResults:")
 print(f"Stepsize used: h = {stable_h:.2e}")
 print(f"Number of steps: {int(1000/stable_h):,}")
-print(f"Computation time: {computation_time:.4f} seconds")
-print(f"Final values at t = 1000:")
+print(f"Computation time: {comp_time:.4f} seconds")
+print(f"Final values at t = {T}:")
 print(f"  xA(1000) = {xA_final:.12f}")
 print(f"  xB(1000) = {xB_final:.12f}")
 print(f"  xC(1000) = {xC_final:.12f}")
