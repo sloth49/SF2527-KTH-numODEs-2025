@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.sparse import diags
 from scipy.sparse.linalg import spsolve
-from scipy.linalg import solve_banded
-from time import time
+# from scipy.linalg import solve_banded
+# from time import time
 
 
 def forcing_func(z: np.ndarray, Q_0: float, a: float, b: float) -> np.ndarray:
@@ -34,9 +34,12 @@ ALPHA_0 = 50.0
 T_OUT = 25.0
 T_IN = 100.0
 V = 1.0
-# N_vals = [10, 20, 40, 80]
-N_vals = [40]
+N_vals = [10, 20, 40, 80]
+# N_vals = [40]
 L = 1.0
+
+# Prepare plotting area
+fig, ax = plt.subplots(1, 1)
 
 for N in N_vals:
     # define the grid
@@ -48,29 +51,43 @@ for N in N_vals:
 
     q_of_z = forcing_func(z, Q_0, A, B)
     # plt.plot(z, q_of_z); plt.show()
+    alpha_of_v = alpha(v=V, alpha_0=ALPHA_0)
 
     d_lo = -2 - V * h
     d_mid = 4
     d_up = -2 + V * h
+    an1 = -2 -V * h -2 + V* h
+    an = 4 - 2 * alpha_of_v * h * (-2 + V * h)
+    b1 = 2 * h**2 * q_of_z[1] + (2 + V * h) * T_IN
+    bn = -2 * alpha_of_v * h * (-2 + V * h)
 
-    # internal points (j=2,...,N-1)
-    diag_lo = np.full(N-3, d_lo)
-    diag_mid = np.full(N-2, d_mid)
-    diag_up = np.full(N-3, d_up)
+    # Main matrix diagonals
+    diag_lo = np.full(shape=N-1, fill_value=d_lo)
+    diag_lo[-1] = an1
+    diag_mid = np.full(shape=N, fill_value=d_mid)
+    diag_mid[-1] = an
+    diag_up = np.full(shape=N-1, fill_value=d_up)
 
-    # inlet boundary (j=1)
-    diag_mid = np.insert(diag_mid, 0, d_mid)
-    diag_up = np.insert(diag_up, 0, d_up)
-
-    # outlet boundary (j=N)
-    diag_lo = np.append(diag_lo, -1, 1)
-    diag_mid = np.append(diag_mid, 1, 1)
+    # RHS of linear system
+    b_vector = 2 * h**2 * q_of_z[1:]
+    b_vector[-1] = bn
     
     # assemble matrix
     diagonals = [diag_lo, diag_mid, diag_up]
     A_matrix = diags(diagonals, offsets=[-1, 0, 1]).tocsc()
 
-
 # 3. Solve the linear system
+    T = spsolve(A=A_matrix, b=b_vector)
+
 # 4. Plot the solution
+    ax.plot(z, np.concatenate(([T_IN], T)), label=f'N={N}')
+
 # 5. Report the temperature values at centre for different grid sizes
+    # T_mid = 
+    print()
+
+# Finalise the plot
+plt.legend()
+plt.title('$T(z)$')
+plt.grid()
+plt.show()
