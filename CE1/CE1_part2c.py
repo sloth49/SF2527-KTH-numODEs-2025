@@ -61,7 +61,7 @@ def integrate(f, u0, t_span, h):
 u0 = np.array([1.0, 0.0, 0.0])
 T = 1000
 
-stable_h = 1e-4
+stable_h = 1e-7
 
 print(f"Solving Robertson's problem for t ∈ [0, {T}] with h = {stable_h}")
 
