@@ -39,6 +39,9 @@ Z_PROBE = 0.5
 # Prepare plotting area
 fig, ax = plt.subplots(1, 1)
 
+# container for T at midpoint
+T_mid_vals = []
+
 for N in N_VALS:
     # define the grid
     z = np.linspace(start=0, stop=L, num=N+1)
@@ -82,6 +85,11 @@ for N in N_VALS:
     if N in [80, 160, 320]:
         T_mid = np.interp(x=Z_PROBE, xp=z, fp=T)
         print(f'N={N}, T({Z_PROBE}) = {T_mid:.6f}')
+        T_mid_vals.append(T_mid)
+
+# Estimate order of accuracy
+p = np.log2((T_mid_vals[0] - T_mid_vals[1]) / (T_mid_vals[1] - T_mid_vals[2]))
+print(f'Estimated order of accuracy p = {p:.6f}')
 
 # Finalise the plot
 plt.legend()
