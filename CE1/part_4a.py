@@ -9,7 +9,7 @@
 import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
-from scipy.linalg import solve
+from scipy.interpolate import RegularGridInterpolator
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
@@ -41,7 +41,7 @@ def create_grid(Lx: float, Ly: float, N: int):
 
     X, Y = np.meshgrid(x, y)
 
-    return X, Y, h, M
+    return x, y, X, Y, h, M
 
 
 def Sn_DN(n: int, h: float) -> sp.csr_matrix:
@@ -76,9 +76,9 @@ def Sn_DN(n: int, h: float) -> sp.csr_matrix:
 
     A = sp.diags(
         diagonals=[diag_lower, diag_main, diag_upper],
-        offsets=[-1, 0, 1], shape=(n+1, n+1), format='lil')
+        offsets=[-1, 0, 1], shape=(n+1, n+1), format='csr')
     
-    return (A.tocsr()) / (h**2)
+    return A / (h**2)
 
 
 def Sn_NN(n: int, h: float) -> sp.csr_matrix:
@@ -110,9 +110,9 @@ def Sn_NN(n: int, h: float) -> sp.csr_matrix:
 
     A = sp.diags(
         diagonals=[diag_lower, diag_main, diag_upper],
-        offsets=[-1, 0, 1], shape=(n+1, n+1), format='lil')
+        offsets=[-1, 0, 1], shape=(n+1, n+1), format='csr')
     
-    return (A.tocsr()) / (h**2)
+    return A / (h**2)
 
 
 def laplacian_2d(N: int, M: int, h: float) -> sp.csr_matrix:
@@ -162,11 +162,15 @@ F = 2.0
 X_PROBE, Y_PROBE = 6.0, 2.0
 
 # Solve PDE
-X, Y, h, M = create_grid(Lx, Ly, N)
+x, y, X, Y, h, M = create_grid(Lx, Ly, N)
 A = laplacian_2d(N=N, M=M, h=h)
 rhs = get_rhs(X=X, Y=Y, T_ext=T_EXT, h=h)
 T = spla.spsolve(A=A, b=rhs)
 T_grid = T.reshape((M+1,N+1), order='C')
+
+# Compute temperature at probe location
+interp = RegularGridInterpolator((y,x), T_grid)
+print('T(x=6, y=2): ', interp((Y_PROBE, X_PROBE)))
 
 # Plot temperature distribution
 fig = plt.figure(figsize=(12, 8))
