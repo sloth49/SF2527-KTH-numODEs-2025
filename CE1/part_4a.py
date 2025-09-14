@@ -7,10 +7,12 @@
 # -----------------------------------------------------------------------------
 
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 from scipy.linalg import solve
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 
 
 def create_grid(Lx: float, Ly: float, N: int):
@@ -49,27 +51,28 @@ def Sn_DN(n: int, h: float) -> sp.csr_matrix:
         -u'' = f
 
     Boundary conditions:
-      Start point: Dirichlet
+      Start point: Dirichlet (T0 = alpha )
+                   (note that this makes the node next to the left
+                    boundary behave like a normal interior point)
       End point: Neumann homogeneous 
 
     For n=4, for example: 
 
-               | -1    0                 |
-               |  0    2   -1            |
+               |  1    0                 |
+               |  -1   2   -1            |
     h^2 * Sn = |      -1    2   -1       |
                |           -1    2   -1  |
                |                -2    2  |
     """
 
     diag_main = np.full(shape=n+1, fill_value=2)
-    diag_main[0] = -1
+    diag_main[0] = 1    # Dirichlet BC
 
     diag_lower = np.full(shape=n, fill_value=-1)
-    diag_lower[0] = 0
     diag_lower[-1] = -2
 
-    diag_upper = diag_lower.copy()
-    diag_upper[-1] = -1
+    diag_upper = np.full(shape=n, fill_value=-1)
+    diag_upper[0] = 0
 
     A = sp.diags(
         diagonals=[diag_lower, diag_main, diag_upper],
@@ -102,7 +105,7 @@ def Sn_NN(n: int, h: float) -> sp.csr_matrix:
     diag_lower = np.full(shape=n, fill_value=-1)
     diag_lower[-1] = -2
 
-    diag_upper = diag_lower.copy()
+    diag_upper = np.full(shape=n, fill_value=-1)
     diag_upper[0] = -2
 
     A = sp.diags(
@@ -126,7 +129,13 @@ def laplacian_2d(N: int, M: int, h: float) -> sp.csr_matrix:
 
 def f_grid(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
-    Forcing function
+    Forcing function f in: -Lapl(u) = f
+
+    Parameters:
+        x, y: 2D array of coordinates
+    
+    Returns:
+        2D array of values, shape as input coordinates
     """
     return np.full_like(a=x, fill_value=2)
 
@@ -139,13 +148,9 @@ def get_rhs(X: np.ndarray, Y: np.ndarray, T_ext: float, h: float) -> np.ndarray:
     rhs = f_grid(X, Y).ravel(order='C')
 
     n = X.shape[1] - 1
-    m = Y.shape[0] - 1
-    dirichlet_BC_term = T_ext / h**2
-    rhs[:(n+1)] = dirichlet_BC_term
-    rhs[(n+1):2*(n+1)] += dirichlet_BC_term
+    rhs[:(n+1)] = T_ext / h**2
 
-    return rhs
-    
+    return rhs    
 
 
 # Define the problem parameters
@@ -156,14 +161,20 @@ T_EXT = 25.0
 F = 2.0
 X_PROBE, Y_PROBE = 6.0, 2.0
 
-# Grid generation
+# Solve PDE
 X, Y, h, M = create_grid(Lx, Ly, N)
 A = laplacian_2d(N=N, M=M, h=h)
-# print(A.toarray())
 rhs = get_rhs(X=X, Y=Y, T_ext=T_EXT, h=h)
-T = spla.spsolve(A, rhs)
-# pass
+T = spla.spsolve(A=A, b=rhs)
+T_grid = T.reshape((M+1,N+1), order='C')
 
-# print(rhs.shape)
-# for i in range(N+1):
-#     print(rhs[i])
+# Plot temperature distribution
+fig = plt.figure(figsize=(12, 8))
+ax = fig.add_subplot(1, 1, 1, projection='3d')
+ax.plot_surface(X=X, Y=Y, Z=T_grid, cmap=cm.viridis, linewidth=0, antialiased=False)
+ax.set_xlabel('$x$', fontsize=14)
+ax.set_ylabel('$y$', fontsize=14)
+ax.view_init(40, -30)
+fig.suptitle('Temperature distribution - uniform heating', fontsize=16)
+plt.tight_layout()
+plt.show()
