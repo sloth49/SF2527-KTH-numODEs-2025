@@ -142,15 +142,16 @@ def f_grid(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 def get_rhs(X: np.ndarray, Y: np.ndarray, T_ext: float, h: float) -> np.ndarray:
     """
-    docstring
+    Returns the RHS vector in the discretised linear system
     """
 
-    rhs = f_grid(X, Y).ravel(order='C')
+    rhs = f_grid(X, Y).ravel(order='C')   # reshape forcing function as 1D vector
 
-    n = X.shape[1] - 1
-    rhs[:(n+1)] = T_ext / h**2
+    # Impose the Dirichlet BC at the bottom side of the domain
+    nodes_x_direction = X.shape[1]
+    rhs[:(nodes_x_direction)] = T_ext / h**2
 
-    return rhs    
+    return rhs
 
 
 # Define the problem parameters
