@@ -180,6 +180,6 @@ ax.plot_surface(X=X, Y=Y, Z=T_grid, cmap=cm.viridis, linewidth=0, antialiased=Fa
 ax.set_xlabel('$x$', fontsize=14)
 ax.set_ylabel('$y$', fontsize=14)
 ax.view_init(40, -30)
-fig.suptitle('Temperature distribution - uniform heating', fontsize=16)
+fig.suptitle('Temperature distribution - $f(x,y)=2$', fontsize=16)
 plt.tight_layout()
 plt.show()
