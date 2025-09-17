@@ -35,29 +35,6 @@ def integrate(u0: np.ndarray, a: np.ndarray, h: float, Tsteps: int) -> np.ndarra
     return u
 
 
-def plot_components(t: np.ndarray, m: np.ndarray) -> None:
-    plt.plot(t, m[0, :], label='m1')
-    plt.plot(t, m[1, :], label='m2')
-    plt.plot(t, m[2, :], label='m3')
-    plt.xlabel('t') 
-    plt.ylabel('m')
-    plt.legend()   
-    plt.grid() 
-    plt.title('Magnetization components over time')
-    plt.show()
-
-
-def plot_trajectory(m: np.ndarray, a: np.ndarray) -> None:
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot(m[0, :], m[1, :], m[2, :], label='Trajectory')
-    ax.quiver(0, 0, 0, a[0], a[1], a[2], 
-              color='r', linewidth=2, label='$a$ vector')    
-    ax.set_box_aspect([1,1,1])
-    ax.legend()
-    plt.show()
-
-
 def assembleA(a: np.ndarray) -> np.ndarray:
     a1, a2, a3 = a
     A = np.array([
@@ -140,6 +117,7 @@ def h_absolute_stability(eigvals: np.ndarray) -> float:
                 pass  # handle case where no root is found
     return min(h_values)
 
+
 # -------------------------------- Main --------------------------------------
 
 # Initial data / setup
@@ -152,4 +130,4 @@ print("Eigenvalues of A:\n", eigvals)
 plot_stability_region(eigvals)
 
 h0 = h_absolute_stability(eigvals)
-print(h0)
+print('h0 =', h0)
