@@ -33,7 +33,7 @@ def robertson_jacobian(t, u):
     return J
 
 # Implicit Euler step using Newton's method
-def IE_step(f, jac, u, t, h, tol=1e-8, max_iter=100):
+def IE_step(f, jac, u, t, h, tol=1e-10, max_iter=100):
     # Solve: u_{n+1} = u_n + h * f(t_{n+1}, u_{n+1})
     # Let F(u) = u - u_n - h * f(t+h, u) = 0
     u_next = u.copy()  # initial guess
