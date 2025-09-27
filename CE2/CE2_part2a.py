@@ -149,61 +149,58 @@ def f_grid(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return 100 * np.exp(-0.5 * (x - 4)**2 - 4 * (y - 1)**2)
 
 
-def get_rhs(X: np.ndarray, Y: np.ndarray, T_ext: float,
-            h: float, k: float) -> np.ndarray:
-    """
-    Returns the RHS vector in the discretised linear system
-
-    Parameters:
-        X, Y: 2D array of coordinates
-        T_ext: external temperature at the bottom boundary
-        h: step size
-        k: time step size
-    """
-
-    rhs = k * f_grid(X, Y).ravel(order='C')   # reshape forcing function as 1D vector
-
-    # Impose the Dirichlet BC at the bottom side of the domain
-    nodes_x_direction = X.shape[1]
-    rhs[:(nodes_x_direction)] = T_ext * (k / h**2)
-
-    return rhs
+def save2jpg(u, time_step):
+    u_grid = u.reshape((Ny+1,Nx+1), order='C')
+    # Plot temperature distribution
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    ax.plot_surface(X=X, Y=Y, Z=u_grid, cmap=cm.viridis, linewidth=0, antialiased=False)
+    ax.set_xlabel('$x$', fontsize=14)
+    ax.set_ylabel('$y$', fontsize=14)
+    ax.view_init(40, -30)
+    fig.suptitle('Temperature distribution $u(x,y)$', fontsize=16)
+    plt.tight_layout()
+    plt.savefig(f'figures/CE2_part2a_{time_step}.jpg', format='jpg', dpi=300)
 
 
 # Define the problem parameters
 Lx = 12.0
 Ly = 5.0
-Nx = 60
+Nx = 24
 T_EXT = 25.0
 TAU_FINAL = 40.0
-DELTA_T = 0.4
+DELTA_T = 4
 X_PROBE, Y_PROBE = 6.0, 2.0
 
-# Domain discretisation
+# Spatial domain discretisation
 x, y, X, Y, h, Ny = create_grid(Lx, Ly, Nx)
 
-# TODO immplement the time-stepping loop
-# Set up linear system and solve
+# Laplacian term discretisation
 Lp2d = laplacian_2d(Nx=Nx, Ny=Ny, h=h)
-L_plus = sp.eye((Nx+1)*(Ny+1), format='csr') + (0.5 * DELTA_T) * Lp2d
-L_minus = spla.splu(
-    sp.eye((Nx+1)*(Ny+1), format='csr') - (0.5 * DELTA_T) * Lp2d
-)
-rhs = get_rhs(X=X, Y=Y, T_ext=T_EXT, h=h, k=DELTA_T)
-T = L_minus.solve(rhs)
-T_grid = T.reshape((Ny+1,Nx+1), order='C')
+I_NxNy = sp.eye((Nx+1)*(Ny+1), format='csr')
+L_plus = I_NxNy + (0.5 * DELTA_T) * Lp2d
+L_minus = spla.splu(I_NxNy - (0.5 * DELTA_T) * Lp2d)    # LU factorization for efficiency
+
+# create array of time steps
+time_steps = int(TAU_FINAL / DELTA_T)
+t = np.linspace(start=0, stop=TAU_FINAL, num=time_steps+1) # include initial time t=0 to be able to plot initial condition
+dt = t[1] - t[0]  # time step size
+
+# Calculate time-indepent part of RHS (dt * f)
+forcing_term = dt * f_grid(x=X, y=Y).ravel(order='C')
+forcing_term[:(Nx+1)] = T_EXT * (dt / h**2)  # Impose Dirichlet BC at bottom boundary
+
+# Time-stepping loop
+u0 = np.full(shape=(Ny+1, Nx+1), fill_value=T_EXT).ravel(order='C')  # Initial condition (block at uniform temperature Text)
+u = u0.copy()   # Initialise the solution to the initial condition
+rhs = L_plus @ u0 + forcing_term    # Initialise right-hand side
+for n in range(1, time_steps+1):
+    u = L_minus.solve(rhs)
+    save2jpg(u, n)
+    # u_old = u
+    rhs = L_plus @ u + forcing_term
+
 
 # # Compute temperature at probe location
 # interp = RegularGridInterpolator((y,x), T_grid)
 # print('T(x=6, y=2): ', interp((Y_PROBE, X_PROBE)))
-
-# Plot temperature distribution
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(1, 1, 1, projection='3d')
-ax.plot_surface(X=X, Y=Y, Z=T_grid, cmap=cm.viridis, linewidth=0, antialiased=False)
-ax.set_xlabel('$x$', fontsize=14)
-ax.set_ylabel('$y$', fontsize=14)
-ax.view_init(40, -30)
-fig.suptitle('Temperature distribution $T(x,y)', fontsize=16)
-plt.tight_layout()
-plt.show()
