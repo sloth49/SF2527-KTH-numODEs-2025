@@ -149,18 +149,39 @@ def f_grid(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return 100 * np.exp(-0.5 * (x - 4)**2 - 4 * (y - 1)**2)
 
 
-def save2jpg(u, time_step):
+def save2jpg(u, time_step, fig, ax):
     u_grid = u.reshape((Ny+1,Nx+1), order='C')
-    # Plot temperature distribution
-    fig = plt.figure(figsize=(12, 8))
-    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    ax.clear()
     ax.plot_surface(X=X, Y=Y, Z=u_grid, cmap=cm.viridis, linewidth=0, antialiased=False)
+    ax.set_zlim(0, 100)
     ax.set_xlabel('$x$', fontsize=14)
     ax.set_ylabel('$y$', fontsize=14)
     ax.view_init(40, -30)
     fig.suptitle('Temperature distribution $u(x,y)$', fontsize=16)
     plt.tight_layout()
-    plt.savefig(f'figures/CE2_part2a_{time_step}.jpg', format='jpg', dpi=300)
+    plt.savefig(f'CE2/figures/CE2_part2a_{time_step}.jpg', format='jpg', dpi=300)
+
+
+def get_Lplus_Lminus(Nx, Ny, h, dt):
+    """
+    Returns the matrices L_plus and L_minus for the Crank-Nicolson scheme
+    """
+    # Laplacian term discretisation
+    Lp2d = laplacian_2d(Nx=Nx, Ny=Ny, h=h)
+    I_NxNy = sp.eye((Nx+1)*(Ny+1), format='csr')
+    L_plus = I_NxNy + (0.5 * dt) * Lp2d
+    L_minus = I_NxNy - (0.5 * dt) * Lp2d
+
+    # Impose Dirichlet BC at bottom boundary
+    L_minus.tolil()     # convert to LIL format to make value assignments easier
+    L_minus[:(Nx+1),:] = 0.0    # set rows corresponding to bottom side all to zero
+    Lminus_diag = L_minus.diagonal()
+    Lminus_diag[:(Nx+1)] = 1.0  # Set the diagonal entries to 1 to match the RHS modification
+    L_minus.setdiag(Lminus_diag)
+    L_minus = L_minus.tocsr()   # convert back to CSR format for efficiency
+    L_minus = spla.splu(L_minus)    # LU factorization for more efficiency in time loop
+
+    return L_plus, L_minus
 
 
 # Define the problem parameters
@@ -169,38 +190,33 @@ Ly = 5.0
 Nx = 24
 T_EXT = 25.0
 TAU_FINAL = 40.0
-DELTA_T = 4
+DELTA_T = 0.5
 X_PROBE, Y_PROBE = 6.0, 2.0
 
 # Spatial domain discretisation
 x, y, X, Y, h, Ny = create_grid(Lx, Ly, Nx)
-
-# Laplacian term discretisation
-Lp2d = laplacian_2d(Nx=Nx, Ny=Ny, h=h)
-I_NxNy = sp.eye((Nx+1)*(Ny+1), format='csr')
-L_plus = I_NxNy + (0.5 * DELTA_T) * Lp2d
-L_minus = spla.splu(I_NxNy - (0.5 * DELTA_T) * Lp2d)    # LU factorization for efficiency
 
 # create array of time steps
 time_steps = int(TAU_FINAL / DELTA_T)
 t = np.linspace(start=0, stop=TAU_FINAL, num=time_steps+1) # include initial time t=0 to be able to plot initial condition
 dt = t[1] - t[0]  # time step size
 
+L_plus, L_minus = get_Lplus_Lminus(Nx=Nx, Ny=Ny, h=h, dt=dt)
+
 # Calculate time-indepent part of RHS (dt * f)
 forcing_term = dt * f_grid(x=X, y=Y).ravel(order='C')
-forcing_term[:(Nx+1)] = T_EXT * (dt / h**2)  # Impose Dirichlet BC at bottom boundary
 
-# Time-stepping loop
+# Time integration (Crank-Nicolson)
 u0 = np.full(shape=(Ny+1, Nx+1), fill_value=T_EXT).ravel(order='C')  # Initial condition (block at uniform temperature Text)
 u = u0.copy()   # Initialise the solution to the initial condition
 rhs = L_plus @ u0 + forcing_term    # Initialise right-hand side
+rhs[:(Nx+1)] = T_EXT  # Impose Dirichlet BC at bottom boundary
+
+# Time marching loop and save results
+fig = plt.figure(figsize=(12, 8))
+ax = fig.add_subplot(1, 1, 1, projection='3d')
 for n in range(1, time_steps+1):
     u = L_minus.solve(rhs)
-    save2jpg(u, n)
-    # u_old = u
+    save2jpg(u, n, fig, ax)
     rhs = L_plus @ u + forcing_term
-
-
-# # Compute temperature at probe location
-# interp = RegularGridInterpolator((y,x), T_grid)
-# print('T(x=6, y=2): ', interp((Y_PROBE, X_PROBE)))
+    rhs[:(Nx+1)] = T_EXT  # re-impose Dirichlet BC at bottom boundary

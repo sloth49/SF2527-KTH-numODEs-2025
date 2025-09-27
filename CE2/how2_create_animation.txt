@@ -1,0 +1,14 @@
+-----------------------------------------------------------------------------
+SF2527 Numerical Methods for Differential Equations I
+Computer Exercise 2, Part 2a
+
+Author: Alessio
+Date: 27 September 2025
+-----------------------------------------------------------------------------
+
+Install ffmpeg by opening a terminal window and running: winget install ffmpeg  
+
+Run CE2_part2a.py
+
+from the figures folder, open a new terminal window
+run: ffmpeg -framerate 30 -i CE2_part2a_%d.jpg -c:v libx264 -pix_fmt yuv420p output.mp4
