@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # SF2527 Numerical Methods for Differential Equations I
-# Computer Exercise 2, Part 2a
+# Computer Exercise 2, Part 2c
 #
 # Author: Alessio / Tim
 # Date: 25 September 2025
@@ -9,9 +9,8 @@
 import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
+from scipy.interpolate import RegularGridInterpolator
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
 
 
 def create_grid(Lx: float, Ly: float, Nx: int):
@@ -148,19 +147,6 @@ def f_grid(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return 100 * np.exp(-0.5 * (x - 4)**2 - 4 * (y - 1)**2)
 
 
-def save2jpg(u, time_step, fig, ax):
-    u_grid = u.reshape((Ny+1,Nx+1), order='C')
-    ax.clear()
-    ax.plot_surface(X=X, Y=Y, Z=u_grid, cmap=cm.viridis, linewidth=0, antialiased=False)
-    ax.set_zlim(0, 100)
-    ax.set_xlabel('$x$', fontsize=14)
-    ax.set_ylabel('$y$', fontsize=14)
-    ax.view_init(40, -30)
-    fig.suptitle('Temperature distribution $u(x,y)$', fontsize=16)
-    plt.tight_layout()
-    plt.savefig(f'CE2/figures/CE2_part2a_{time_step}.jpg', format='jpg', dpi=300)
-
-
 def get_Lplus_Lminus(Nx, Ny, h, dt):
     """
     Returns the matrices L_plus and L_minus for the Crank-Nicolson scheme
@@ -174,9 +160,9 @@ def get_Lplus_Lminus(Nx, Ny, h, dt):
     # Impose Dirichlet BC at bottom boundary
     L_minus.tolil()     # convert to LIL format to make value assignments easier
     L_minus[:(Nx+1),:] = 0.0    # set rows corresponding to bottom side all to zero
-    Lminus_diag = L_minus.diagonal()
-    Lminus_diag[:(Nx+1)] = 1.0  # Set the diagonal entries to 1 to match the RHS modification
-    L_minus.setdiag(Lminus_diag)
+    diag = L_minus.diagonal()
+    diag[:(Nx+1)] = 1.0  # Set the diagonal entries to 1 to match the RHS modification
+    L_minus.setdiag(diag)
     L_minus = L_minus.tocsr()   # convert back to CSR format for efficiency
     L_minus = spla.splu(L_minus)    # LU factorization for more efficiency in time loop
 
@@ -186,13 +172,15 @@ def get_Lplus_Lminus(Nx, Ny, h, dt):
 # Define the problem parameters
 Lx = 12.0
 Ly = 5.0
-Nx = 24
+Nx = 120
 T_EXT = 25.0
 TAU_FINAL = 40.0
-DELTA_T = 0.5
+DELTA_T = 0.25
+X_PROBE, Y_PROBE = 6.0, 2.0
+T_PROBE_CE1 =  47.224998
 
 # Spatial domain discretisation
-x, y, X, Y, h, Ny = create_grid(Lx, Ly, Nx)
+x, y, X, Y, h, Ny = create_grid(Lx=Lx, Ly=Ly, Nx=Nx)
 
 # create array of time steps
 time_steps = int(TAU_FINAL / DELTA_T)
@@ -210,11 +198,26 @@ u = u0.copy()   # Initialise the solution to the initial condition
 rhs = L_plus @ u0 + forcing_term    # Initialise right-hand side
 rhs[:(Nx+1)] = T_EXT  # Impose Dirichlet BC at bottom boundary
 
-# Time marching loop and save results
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(1, 1, 1, projection='3d')
+# Time marching loop and store results for plotting
+probe_vals = [T_EXT]
 for n in range(1, time_steps+1):
     u = L_minus.solve(rhs)
-    save2jpg(u, n, fig, ax)
+    u_grid = u.reshape((Ny+1,Nx+1), order='C')
+    interp = RegularGridInterpolator((y,x), u_grid)
+    probe_val = interp((Y_PROBE, X_PROBE))
+    probe_vals.append(probe_val)
     rhs = L_plus @ u + forcing_term
     rhs[:(Nx+1)] = T_EXT  # re-impose Dirichlet BC at bottom boundary
+
+print(f'Temperature at probe location (x={X_PROBE}, y={Y_PROBE})',
+      f'at final time ({TAU_FINAL}): {probe_vals[-1]:.6f}')
+
+# plot temperature at probe location
+plt.figure(figsize=(8,5))
+plt.plot(t, probe_vals, '-o')
+plt.xlabel('$\\tau$', fontsize=14)
+plt.title('$T(x=6,y=2,\\tau)$', fontsize=16)
+plt.axhline(y=T_PROBE_CE1, color='r', linestyle='--', label=f'CE1 value ({T_PROBE_CE1:.4f})')
+plt.legend(fontsize=12)
+plt.grid()
+plt.show()
