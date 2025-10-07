@@ -14,7 +14,7 @@ from scipy.interpolate import RegularGridInterpolator
 import math
 
 
-def assemble_matrix(dx: float, diffusion_coeff: float) -> sp.csc_matrix:
+def assemble_matrix(dx: float, Nx: int, diffusion_coeff: float) -> sp.csc_matrix:
     """
     Assembles the finite difference matrix for the 1D heat equation
     with Dirichlet boundary conditions.
@@ -44,43 +44,45 @@ def alpha(time: float, end_forcing_time: float) -> float:
 def integrate_euler_explicit(
         u_initial: np.ndarray,
         space_domain: np.ndarray, time_domain: np.ndarray,
-        dx: float, dt: float,
-        diffusion_coeff: float, end_forcing: float) -> np.ndarray:
+        Nx: int, dx: float, dt: float,
+        diffusion_coeff: float, end_forcing: float
+    ) -> np.ndarray:
     """
     Integrates the 1D heat equation using the explicit Euler method in time,
     with Dirichlet boundary condition at x=0, Neumann at x=L:
                 ut = d * uxx
                 u(0,t) = alpha(t),   du/dx(L,t) = 0
     Returns:
-        array of shape (N + 1, num_steps + 1) where each row corresponds
+        array of shape (time_steps+1, Nx+1), where each row corresponds
         to the solution at a given time step, starting from t=0.
     """
-    nodes, time_steps = space_domain.shape[0], time_domain.shape[0] # node: Nx+1, time_steps: Nt+1
+    nodes, time_steps = space_domain.shape[0], time_domain.shape[0] # nodes: Nx+1, time_steps: Nt+1
     end_time = time_domain[-1]
 
-    A = assemble_matrix(dx=dx, diffusion_coeff=diffusion_coeff)
+    A = assemble_matrix(dx=dx, Nx=Nx, diffusion_coeff=diffusion_coeff)
 
     # Initialise b vector
-    b = np.zeros(shape=nodes-2)
+    b = np.zeros(shape=(nodes-2))
     alpha_tn = alpha(time=0.0, end_forcing_time=end_forcing)
     b[0] = (diffusion_coeff / dx**2) * alpha_tn
 
     u_grid = np.zeros(shape=(time_steps, nodes))    # solution container
     u_grid[0, :] = u_initial                     # set initial condition
 
+    u_inner = u_initial[1:-1]   # set inner points with the initial condition
     # begin time-stepping
-    u_inner = u_initial[1:-1] 
     for n in range(1, time_steps):
 
+        tn = time_domain[n]
+        alpha_tn = alpha(time=tn, end_forcing_time=end_forcing)
+
         u_inner_new = u_inner + dt * (A @ u_inner + b)
-        u_grid[n, 1:-1] = u_inner_new   # update inner nodes
+        u_grid[n, 1:-1] = u_inner_new   # update inner nodes in the solution container
         u_grid[n, 0] = alpha_tn       # update the BC at x=0
         u_grid[n, -1] = u_grid[n, -2]  # update the BC at x=L (Neumann)
         
         # update for next iteration
         u_inner = u_inner_new
-        tn = time_domain[n]
-        alpha_tn = alpha(time=tn, end_forcing_time=end_forcing)
         b[0] = (diffusion_coeff / dx**2) * alpha_tn
 
     return  u_grid
@@ -108,12 +110,12 @@ def discretise_domain(
 
 L = 1.0                     # length of the rod
 T_FINAL = 2.0               # final time
-t_snapshot = 1.1
-Nx = 100                  # spatial intervals on x axis - so Nx+1 nodes
-Nt = 14000                # time steps - so Nt+1 time levels, starting from t=0 (initial condition)
+T_SNAPSHOT = 1.1
+Nx = 100                    # spatial intervals on x axis - so Nx+1 nodes
+Nt = 14000                  # time steps - so Nt+1 time levels, starting from t=0 (initial condition)
 a = 1.2                     # boundary condition parameter
 d = 0.35                    # diffusion coefficient
-u0 = np.zeros(shape=Nx+1)   # initial condition for all x including boundaries
+u0 = np.zeros(shape=Nx+1)   # initial condition: T=0 for all x including boundaries
 
 #Discretization
 x, t, dx, dt = discretise_domain(
@@ -124,34 +126,36 @@ x, t, dx, dt = discretise_domain(
 Co = (d * dt) / dx**2
 if (Co > 0.5):
     raise ValueError(f"CFL Condition not met: Co = (d*dt)/(dx^2) = {Co:.4f} > 0.5")
-# if False:
-#     pass
 else:
     print(
         "Solving PDE with Explicit Euler method in time","\n"
-        f"Courant No: (d*dt)/(dx^2) = {Co:.4f} <= stability limit (0.5)")
+        f"Courant No: (d*dt)/(dx^2) = {Co:.4f} <= stability limit (0.5)"
+    )
 
 u_grid = integrate_euler_explicit(
     u_initial=u0,
     space_domain=x, time_domain=t,
-    dx=dx, dt=dt, diffusion_coeff=d, end_forcing=a)
+    Nx=Nx, dx=dx, dt=dt, diffusion_coeff=d, end_forcing=a)
 
 # Plotting the 2D temperature distribution
 X, TAU = np.meshgrid(x, t, indexing='xy')
 plt.figure()
 ax = plt.axes(projection='3d')
 ax.plot_surface(X, TAU, u_grid, cmap='viridis')
-ax.set_xlabel('x')  
-ax.set_ylabel('t')
-ax.set_zlabel('u(x,t)')
-ax.set_title('3D surface plot of u(x,t)')
+ax.set_xlabel('$x$', fontsize=16, labelpad=10)  
+ax.set_ylabel('$t$', fontsize=16, labelpad=10)
+ax.set_zlabel('$u(x,\\tau)$')
+ax.set_title('3D surface plot of $u(x,\\tau)$', fontsize=16)
 plt.show()
 
 # Plot the distribution at t_snapshot
-interp_func = RegularGridInterpolator((t, x), u_grid)
-u_snapshot = interp_func((t_snapshot, x))
+interp = RegularGridInterpolator((t, x), u_grid)
+snapshot_points = np.column_stack(
+    (np.full_like(a=x, fill_value=T_SNAPSHOT), x)
+)
+u_snapshot = interp(snapshot_points)
 plt.figure()
-plt.plot(x, u_snapshot, label=f't={t_snapshot:.1f}s')
+plt.plot(x, u_snapshot, label=f't={T_SNAPSHOT:.1f}s')
 plt.xlabel('$x$') 
 plt.ylabel('$u(x,\\tau_1)$')
 plt.title('Distribution of u along the rod at t=1.1s')
