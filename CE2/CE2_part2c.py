@@ -181,6 +181,7 @@ T_PROBE_CE1 =  47.224998
 
 # Spatial domain discretisation
 x, y, X, Y, h, Ny = create_grid(Lx=Lx, Ly=Ly, Nx=Nx)
+print('h:', h)
 
 # create array of time steps
 time_steps = int(TAU_FINAL / DELTA_T)
