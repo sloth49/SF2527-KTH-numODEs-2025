@@ -13,9 +13,9 @@ import sys
 from mpl_toolkits.mplot3d import Axes3D
 
 class NumericalScheme(Enum):
-    UPWIND = "upwind"
-    LAX_FREDRICHS = "lax_friedrichs"
-    LAX_WENDROFF = "lax_wendroff"
+    UPWIND = "Upwind"
+    LAX_FREDRICHS = "Lax-Friedrichs"
+    LAX_WENDROFF = "Lax-Wendroff"
 
 
 class Solver:
@@ -69,11 +69,30 @@ class Solver:
     
 
     def solve_pde(
-            self, domain: Domain, initial_condition: np.ndarray,
+            self,
+            domain: Domain,
+            initial_condition: np.ndarray,
             left_bc: Callable[[float], float],
-            num_scheme: NumericalScheme) -> np.ndarray:
+            num_scheme: NumericalScheme
+            ) -> np.ndarray:
         """
-        Solve using upwind scheme.
+        Solve the PDE in U(x,t):
+            Ut + aUx = 0  (a = const > 0)
+        using a specified numerical scheme.
+
+        Parameters:
+            domain (Domain):
+                the discretised space-time domain
+            initial_condition (np.ndarray):
+                U(x,0), shape`(domain.x.shape)`
+            left_bc(Callabe[[float], float]):
+                function of t for the left BC
+            num_scheme (NumericalScheme):
+                the numerical scheme to use for solving
+        Returns:
+            u (np.ndarray):
+                2D array,
+                shape`(domain.t.shape, domain.x.shape)`
         """
         self._domain = domain
         self._left_bc = left_bc
@@ -99,21 +118,34 @@ class Solver:
             u_curr = self.u[t_step_curr, :]     # next sol. val. u^{n+1}
             u_curr[0] = self._left_bc(t_curr)   # apply BC at left boundary
 
-            # Upwind scheme
             if num_scheme == NumericalScheme.UPWIND:
-                u_curr[1:] = u_old[1:] - self._Co * (u_old[1:] - u_old[:-1])
+                # create groups of node indices for scheme stencil
+                east = slice(1, None)
+                west = slice(None, -1)
+                # Scheme time step
+                u_curr[east] = u_old[east] - self._Co * (u_old[east] - u_old[west])
 
-            # Lax-Friedrichs scheme
             if num_scheme == NumericalScheme.LAX_FREDRICHS:
-                # TODO used upwind for testing/ Replace
-                u_curr[1:] = u_old[1:] - self._Co * (u_old[1:] - u_old[:-1])
-
-            # Lax-Wendroff scheme
-            if num_scheme == NumericalScheme.LAX_WENDROFF:
+                # Create groups of node indices for scheme stencil
                 interior = slice(1, -1)
                 east = slice(2, None)
                 west = slice(None, -2)
-                # TODO include numerical boundary condition here applying east / west to u_old
+                # Apply numerical boundary condition at RHS boundary
+                u_old[-1] = 2 * u_old[-2] - u_old[-3]
+                # Scheme time step
+                u_curr[interior] = (
+                    0.5 * (u_old[east] + u_old[west])
+                    -0.5 * self._Co * (u_old[east] - u_old[west]) # type: ignore
+                )
+
+            if num_scheme == NumericalScheme.LAX_WENDROFF:
+                # Create groups of node indices for scheme stencil
+                interior = slice(1, -1)
+                east = slice(2, None)
+                west = slice(None, -2)
+                # Apply numerical boundary condition at RHS boundary
+                u_old[-1] = 2 * u_old[-2] - u_old[-3]
+                # Scheme time step
                 u_curr[interior] = (
                     u_old[interior]
                     - 0.5 * self._Co * (u_old[east] - u_old[west]) # type: ignore
