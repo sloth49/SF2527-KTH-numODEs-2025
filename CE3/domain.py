@@ -55,3 +55,33 @@ class Domain:
             raise ValueError("Nx and Nt must be positive integers.")
         if (self.L <= 0) or (self.T <= 0):
             raise ValueError("L and T must be positive values.")
+        
+
+def make_domain(a: float, L: float, T: float, Co: float, Nx: int):
+    """
+    For an advection PDe of the form
+        Ut + aUx = 0  (a = const > 0)
+    takes a specified Courant number and grid spacing, and returns the 
+    domain matching these specifications.
+
+    Parameters:
+        a (float):
+            advection speed (positive constant)
+        L (float):
+            Space length of the domain [0, L] * [0, T]
+        T (float):
+            Time length of the domain [0, L] * [0, T]
+        Co (float):
+            Courant number: a * dt / dx
+        Nx (int):
+            Grid intervals in the x dimension
+    Returns:
+        domain (Domain):
+            Discretised array matching the specified parameters
+    """
+    # Co = a * dt / dx
+    #    = a * (T/Nt) / (L/Nx)
+    #    = (a * T * Nx) / (Nt * L)
+    # -> Nt = (a * T * Nx) / (Co * L)
+    Nt = (a * T * Nx) / (Co * L)
+    return Domain(L=D, T=T_FINAL, Nx=Nx, Nt=Nt)
