@@ -74,14 +74,15 @@ def make_domain(a: float, L: float, T: float, Co: float, Nx: int):
         Co (float):
             Courant number: a * dt / dx
         Nx (int):
-            Grid intervals in the x dimension
+            Number of grid intervals in the x dimension
     Returns:
         domain (Domain):
             Discretised array matching the specified parameters
     """
-    # Co = a * dt / dx
-    #    = a * (T/Nt) / (L/Nx)
-    #    = (a * T * Nx) / (Nt * L)
+    # Compute Nt from Co and Nx:
+    #    Co = a * dt / dx
+    #       = a * (T/Nt) / (L/Nx)
+    #       = (a * T * Nx) / (Nt * L)
     # -> Nt = (a * T * Nx) / (Co * L)
-    Nt = (a * T * Nx) / (Co * L)
-    return Domain(L=D, T=T_FINAL, Nx=Nx, Nt=Nt)
+    Nt = int((a * T * Nx) / (Co * L))
+    return Domain(L=L, T=T, Nx=Nx, Nt=Nt)

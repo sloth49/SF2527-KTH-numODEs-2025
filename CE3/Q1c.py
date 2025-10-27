@@ -6,7 +6,7 @@
 # Date: 14 October 2025
 # -----------------------------------------------------------------------------
 from functools import partial
-from solver import Solver, NumericalScheme
+from solver import Solver, NumericalSchemes
 from domain import Domain
 import numpy as np
 from scipy import signal
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     solver = Solver(a=a)
     domain = Domain(L=D, T=T_FINAL, Nx=Nx, Nt=Nt)
 
-    sol_numerical_labels = [scheme.value for scheme in NumericalScheme]
+    sol_numerical_labels = [scheme.value for scheme in NumericalSchemes]
     solutions_numerical_all_BCs = []
     for bc_func in [
         sine_wave_tau_fixed,
@@ -65,9 +65,9 @@ if __name__ == "__main__":
         solutions_numerical_thisBC = []
         # solutions_numerical_sine_bc = []
         for scheme in [
-            NumericalScheme.UPWIND,
-            NumericalScheme.LAX_FREDRICHS,
-            NumericalScheme.LAX_WENDROFF
+            NumericalSchemes.UPWIND,
+            NumericalSchemes.LAX_FREDRICHS,
+            NumericalSchemes.LAX_WENDROFF
         ]:
             solutions_numerical_thisBC.append(
                 solver.solve_pde(
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         plot_at_specified_time(
             domain=domain,
             plot_time=T_FINAL,
-            sol_analytical=sol_analytical,
+            sol_analytical_func=sol_analytical,
             sols_numerical=sols_num,
             sol_numerical_labels=sol_numerical_labels,
             title=title

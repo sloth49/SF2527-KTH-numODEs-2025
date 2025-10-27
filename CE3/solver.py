@@ -12,7 +12,7 @@ from enum import Enum
 import sys
 from mpl_toolkits.mplot3d import Axes3D
 
-class NumericalScheme(Enum):
+class NumericalSchemes(Enum):
     UPWIND = "Upwind"
     LAX_FREDRICHS = "Lax-Friedrichs"
     LAX_WENDROFF = "Lax-Wendroff"
@@ -73,7 +73,7 @@ class Solver:
             domain: Domain,
             initial_condition: np.ndarray,
             left_bc: Callable[[float], float],
-            num_scheme: NumericalScheme
+            num_scheme: NumericalSchemes
             ) -> np.ndarray:
         """
         Solve the PDE in U(x,t):
@@ -118,14 +118,14 @@ class Solver:
             u_curr = self.u[t_step_curr, :]     # next sol. val. u^{n+1}
             u_curr[0] = self._left_bc(t_curr)   # apply BC at left boundary
 
-            if num_scheme == NumericalScheme.UPWIND:
+            if num_scheme == NumericalSchemes.UPWIND:
                 # create groups of node indices for scheme stencil
                 east = slice(1, None)
                 west = slice(None, -1)
                 # Scheme time step
                 u_curr[east] = u_old[east] - self._Co * (u_old[east] - u_old[west])
 
-            if num_scheme == NumericalScheme.LAX_FREDRICHS:
+            if num_scheme == NumericalSchemes.LAX_FREDRICHS:
                 # Create groups of node indices for scheme stencil
                 interior = slice(1, -1)
                 east = slice(2, None)
@@ -138,7 +138,7 @@ class Solver:
                     -0.5 * self._Co * (u_old[east] - u_old[west]) # type: ignore
                 )
 
-            if num_scheme == NumericalScheme.LAX_WENDROFF:
+            if num_scheme == NumericalSchemes.LAX_WENDROFF:
                 # Create groups of node indices for scheme stencil
                 interior = slice(1, -1)
                 east = slice(2, None)

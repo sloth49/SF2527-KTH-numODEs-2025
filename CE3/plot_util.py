@@ -44,7 +44,7 @@ def plot_time_level_samples(
 def plot_at_specified_time(
         domain: Domain,
         plot_time: float,
-        sol_analytical: Callable[[float, float], float],
+        sol_analytical_func: Callable[[float, float], float],
         sols_numerical: list[np.ndarray],
         sol_numerical_labels: list[str],
         title: str) -> None:
@@ -69,18 +69,18 @@ def plot_at_specified_time(
     Returns:
         None
     """
-    # extract numerical solutions values u(x,t=plot_time)
+    # Extract numerical solutions values u(x,t=plot_time)
     x, t = domain.x, domain.t
     plot_time_index = np.argmin(np.abs(plot_time - t))
     numerical_sols = [sol[plot_time_index, :] for sol in sols_numerical]
 
     # Compute analytical solution
-    analytical = np.array([sol_analytical(xi, plot_time) for xi in x])
+    sol_analytical = np.array([sol_analytical_func(xi, plot_time) for xi in x])
     
     # Plot results
     fig = plt.figure(figsize=(8,6))
     markers = cycle(('o', 'v', 's', '*', 'D', 'X', '^'))
-    plt.plot(x, analytical, label='Analytical solution', linestyle='-')
+    plt.plot(x, sol_analytical, label='Analytical solution', linestyle='-')
     for numerical, label in zip(
             numerical_sols,
             sol_numerical_labels):
@@ -94,9 +94,10 @@ def plot_at_specified_time(
 
 
 def plot_multiple_discretisations(
+        
         domains: list[Domain],
         plot_time: float,
-        sol_analytical: Callable[[float, float], float],
+        sol_analytical_func: Callable[[float, float], float],
         sols_numerical: list[np.ndarray],
         sol_numerical_labels: list[str],
         title: str,
@@ -109,7 +110,7 @@ def plot_multiple_discretisations(
             list of discretised domains
         plot_time (float):
             Specified time for numerical / analytical solution
-        sol_analytical (Callable[[float, float], float]):
+        sol_analytical_func (Callable[[float, float], float]):
             Function representing the analytical solution        
         sols_numerical (list(list(np.ndarray))):
             List of lists of arrays, with shape (nTS, n) where nTS = time steps,
@@ -127,10 +128,32 @@ def plot_multiple_discretisations(
     plot_rows = ceil(len(domains) / plot_columns) 
 
     fig, axes = plt.subplots(nrows=plot_rows, ncols=plot_columns)
-    x = np.linspace(0, 5)
-    y = np.sin(x)
-    for ax in axes.ravel():
-        ax.plot(x, y)
+    markers = cycle(('o', 'v', 's', '*', 'D', 'X', '^'))
+
+    # x = np.linspace(0, 5)
+    # y = np.sin(x)
+    # for ax in axes.ravel():
+    #     ax.plot(x, y)
+    for domain, ax in zip(domains, axes.ravel()):
+        x, t = domain.x, domain.t
+
+        # Analytical solution
+        sol_analytical = np.array([sol_analytical_func(xi, plot_time) for xi in x])
+
+        # Extract numerical solutions values u(x,t=plot_time)
+        plot_time_index = np.argmin(np.abs(plot_time - t))
+        numerical_sols = [sol[plot_time_index, :] for sol in sols_numerical]
+
+        # Plot results
+        ax.plot(x, sol_analytical, label='Analytical solution', linestyle='-')
+        for numerical_sol, label in zip(numerical_sols,sol_numerical_labels):
+            ax.plot(
+                x, numerical_sol,
+                label=label, marker=next(markers), markersize=4, linewidth=0
+            )
+        ax.grid()
+        ax.set_xlabel('$x$', fontsize=14)
+        ax.set_title(f'dt: {domain.dt}')
+        ax.legend(fontsize=12)
+    fig.suptitle(title, fontsize=16)
     plt.show()
-
-
