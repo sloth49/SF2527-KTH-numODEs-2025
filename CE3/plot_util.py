@@ -96,10 +96,11 @@ def plot_at_specified_time(
 def plot_multiple_discretisations(
         
         domains: list[Domain],
+        Co_vals: list[float],
         plot_time: float,
         sol_analytical_func: Callable[[float, float], float],
-        sols_numerical: list[np.ndarray],
-        sol_numerical_labels: list[str],
+        sols_num_all_domains: list[list[np.ndarray]],
+        sol_num_labels: list[str],
         title: str,
         plot_columns: int=2) -> None:
     """
@@ -107,16 +108,19 @@ def plot_multiple_discretisations(
 
     Parameters:
         domains (list[Domain]):
-            list of discretised domains
+            List of discretised domains
+        Co_vals (list[float]):
+            List of Courant numbers resulting from the combination of advection
+            velocity and domain discretisation
         plot_time (float):
             Specified time for numerical / analytical solution
         sol_analytical_func (Callable[[float, float], float]):
             Function representing the analytical solution        
-        sols_numerical (list(list(np.ndarray))):
+        sols_num_all_domains (list(list(np.ndarray))):
             List of lists of arrays, with shape (nTS, n) where nTS = time steps,
             n = space steps, representing the numerical solutions computed with
             various schemes and various values of the parameter
-        sol_numerical_labels (list(str)):
+        sol_num_labels (list(str)):
             Names of the schemes corresponding to the numerical solutions
         title (str):
             Plot title
@@ -128,13 +132,15 @@ def plot_multiple_discretisations(
     plot_rows = ceil(len(domains) / plot_columns) 
 
     fig, axes = plt.subplots(nrows=plot_rows, ncols=plot_columns)
-    markers = cycle(('o', 'v', 's', '*', 'D', 'X', '^'))
+    markers_sequence = ('o', 'v', '.', '*', 'D', 'X', '^')
 
-    # x = np.linspace(0, 5)
-    # y = np.sin(x)
-    # for ax in axes.ravel():
-    #     ax.plot(x, y)
-    for domain, ax in zip(domains, axes.ravel()):
+    for domain, Co, sols_num_this_domain, ax in zip(
+        domains,
+        Co_vals,
+        sols_num_all_domains,
+        axes.ravel()
+    ):
+        markers = cycle(markers_sequence)
         x, t = domain.x, domain.t
 
         # Analytical solution
@@ -142,18 +148,19 @@ def plot_multiple_discretisations(
 
         # Extract numerical solutions values u(x,t=plot_time)
         plot_time_index = np.argmin(np.abs(plot_time - t))
-        numerical_sols = [sol[plot_time_index, :] for sol in sols_numerical]
+        sols_num = [sol[plot_time_index, :] for sol in sols_num_this_domain]
 
         # Plot results
         ax.plot(x, sol_analytical, label='Analytical solution', linestyle='-')
-        for numerical_sol, label in zip(numerical_sols,sol_numerical_labels):
+        for sol_num, label in zip(sols_num, sol_num_labels):
             ax.plot(
-                x, numerical_sol,
+                x, sol_num,
                 label=label, marker=next(markers), markersize=4, linewidth=0
             )
         ax.grid()
-        ax.set_xlabel('$x$', fontsize=14)
-        ax.set_title(f'dt: {domain.dt}')
+        ax.set_xlabel('$x$', fontsize=10)
+        ax.set_title(f'dt: {domain.dt:.3f}, Co: {Co:.3f}')
         ax.legend(fontsize=12)
+
     fig.suptitle(title, fontsize=16)
     plt.show()
