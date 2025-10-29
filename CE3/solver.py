@@ -107,51 +107,59 @@ class Solver:
               + num_scheme.value
               + f" scheme, Courant No: {self._Co}.")
         self._solver_called = True
+        
+        # === Switch the solver to the specified numerical scheme ===
+        if num_scheme == NumericalSchemes.UPWIND:
+            # create groups of node indices for scheme stencil
+            east = slice(1, None)
+            west = slice(None, -1)
+            def step(u: np.ndarray) -> np.ndarray:
+                u_new = np.copy(u)
+                u_new[east] = u[east] - self._Co * (u[east] - u[west])
+                return u_new
+            
+        elif num_scheme == NumericalSchemes.LAX_FREDRICHS:
+            # Create groups of node indices for scheme stencil
+            interior = slice(1, -1)
+            east = slice(2, None)
+            west = slice(None, -2)
+            def step(u: np.ndarray) -> np.ndarray:
+                u_new = np.copy(u)
+                u_new[interior] = (
+                    0.5 * (u[east] + u[west])
+                    -0.5 * self._Co * (u[east] - u[west]) # type: ignore
+                )
+                return u_new
+        
+        elif num_scheme == NumericalSchemes.LAX_WENDROFF:
+            # Create groups of node indices for scheme stencil
+            interior = slice(1, -1)
+            east = slice(2, None)
+            west = slice(None, -2)
+            def step(u: np.ndarray) -> np.ndarray:
+                u_new = np.copy(u)
+                u_new[interior] = (
+                    u[interior]
+                    - 0.5 * self._Co * (u[east] - u[west]) # type: ignore
+                    + 0.5 * self._Co**2 * (u[east] - 2 * u[interior] + u[west]) # type: ignore
+                )
+                return u_new
+        
+        else:
+                raise ValueError(f"Unkonwn numerical scheme: {num_scheme}")
 
         # Initial condition
         self.u[0, :] = self.initial_cond
         u_old = self.initial_cond
-
-        # calculate solution for each time step
+            
+        # Time marching loop
         for t_step_curr in range(1, domain.Nt+1):            
-            t_curr = domain.t[t_step_curr]      # next time t^{n+1}
-            u_curr = self.u[t_step_curr, :]     # next sol. val. u^{n+1}
+            t_curr = domain.t[t_step_curr]      # time level to calculate the solution at
+            u_curr = step(u_old)                # march the solution forward
             u_curr[0] = self._left_bc(t_curr)   # apply BC at left boundary
-
-            if num_scheme == NumericalSchemes.UPWIND:
-                # create groups of node indices for scheme stencil
-                east = slice(1, None)
-                west = slice(None, -1)
-                # Scheme time step
-                u_curr[east] = u_old[east] - self._Co * (u_old[east] - u_old[west])
-
-            if num_scheme == NumericalSchemes.LAX_FREDRICHS:
-                # Create groups of node indices for scheme stencil
-                interior = slice(1, -1)
-                east = slice(2, None)
-                west = slice(None, -2)
-                # Apply numerical boundary condition at RHS boundary
-                u_old[-1] = 2 * u_old[-2] - u_old[-3]
-                # Scheme time step
-                u_curr[interior] = (
-                    0.5 * (u_old[east] + u_old[west])
-                    -0.5 * self._Co * (u_old[east] - u_old[west]) # type: ignore
-                )
-
-            if num_scheme == NumericalSchemes.LAX_WENDROFF:
-                # Create groups of node indices for scheme stencil
-                interior = slice(1, -1)
-                east = slice(2, None)
-                west = slice(None, -2)
-                # Apply numerical boundary condition at RHS boundary
-                u_old[-1] = 2 * u_old[-2] - u_old[-3]
-                # Scheme time step
-                u_curr[interior] = (
-                    u_old[interior]
-                    - 0.5 * self._Co * (u_old[east] - u_old[west]) # type: ignore
-                    + 0.5 * self._Co**2 * (u_old[east] - 2 * u_old[interior] + u_old[west]) # type: ignore
-                )
-
+            if num_scheme != NumericalSchemes.UPWIND:
+                u_curr[-1] = 2 * u_curr[-2] - u_curr[-3]    # Numerical BC at RHS boundary
+            self.u[t_step_curr, :] = u_curr     # store the result
             u_old = u_curr
         
         return self.u
