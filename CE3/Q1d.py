@@ -26,11 +26,17 @@ if __name__ == "__main__":
     D = 10.0
     a = 2.0
     T_FINAL = 4.0
-    Nx = 100
-    # Nt = 85
-    Co_vals = [0.1, 0.3, 0.5, 0.7, 0.95, 1.0]
     plot_time = T_FINAL
-    # plot_time = 0.5
+
+    # === Fixed Delta x, varying Courant number ===
+    # Nx_fixed = 100
+    # Co_vals = [0.1, 0.3, 0.5, 0.7, 0.95, 1.0]
+    # Nx_vals = [Nx_fixed for Co in Co_vals]
+
+    # === Fixed Courant No, varying Delta x (Nx) ===
+    Co_fixed = 0.9
+    Nx_vals = [80, 100, 150, 200, 250]
+    Co_vals = [Co_fixed for Co in Nx_vals]
 
 
     # === Boundary conditions ===
@@ -38,10 +44,10 @@ if __name__ == "__main__":
     # wave functions w(t; tau) and fixing the period tau
     sine_wave_tau_fixed = partial(sine_wave, tau=TAU)
     square_wave_tau_fixed = partial(square_wave, tau=TAU)
-    # bc_func = sine_wave_tau_fixed
-    # bc_plot_title = ' - sine wave BC'
-    bc_func = square_wave_tau_fixed
-    bc_plot_title = ' - square wave BC'
+    bc_func = sine_wave_tau_fixed
+    bc_plot_title = ' - sine wave BC'
+    # bc_func = square_wave_tau_fixed
+    # bc_plot_title = ' - square wave BC'
 
     # === Analytical solutions ===
     # lambda function of (x, t) representing the exact PDE solution
@@ -51,16 +57,20 @@ if __name__ == "__main__":
                            if x < a * time
                            else 0)
 
-    # === Initial condition ===
-    IC_allzero = np.zeros(shape=Nx+1)
-
     # === Solve equation numerically ===
     solver = Solver(a=a)
     domains = []
     solutions_numerical_all_domains = []
-    for Co in Co_vals:
+
+    for Co, Nx in zip(Co_vals, Nx_vals):
+        # Create domain with specified parameters
         domain = make_domain(a=a, L=D, T=T_FINAL, Co=Co, Nx=Nx)
         domains.append(domain)
+
+        # Initial condition
+        IC_allzero = np.zeros(shape=Nx+1)
+
+        # Compute analytical / numerical solutions
         solutions_numerical_this_domain = []
         for scheme in NumericalSchemes:
             solutions_numerical_this_domain.append(

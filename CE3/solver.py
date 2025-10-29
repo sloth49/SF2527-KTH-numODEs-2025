@@ -103,9 +103,10 @@ class Solver:
         if not self.cfl_condition_satisfied():
             print(f"CFL condition not satisfied (Co={self._Co}). Stopping the program.")
             sys.exit()
+        Co = self._Co   # Local alias for readability
         print("Solving the PDE with the "
               + num_scheme.value
-              + f" scheme, Courant No: {self._Co}.")
+              + f" scheme, Courant No: {Co}.")
         self._solver_called = True
         
         # === Switch the solver to the specified numerical scheme ===
@@ -115,7 +116,7 @@ class Solver:
             west = slice(None, -1)
             def step(u: np.ndarray) -> np.ndarray:
                 u_new = np.copy(u)
-                u_new[east] = u[east] - self._Co * (u[east] - u[west])
+                u_new[east] = u[east] - Co * (u[east] - u[west])
                 return u_new
             
         elif num_scheme == NumericalSchemes.LAX_FREDRICHS:
@@ -127,7 +128,7 @@ class Solver:
                 u_new = np.copy(u)
                 u_new[interior] = (
                     0.5 * (u[east] + u[west])
-                    -0.5 * self._Co * (u[east] - u[west]) # type: ignore
+                    -0.5 * Co * (u[east] - u[west]) # type: ignore
                 )
                 return u_new
         
@@ -140,8 +141,8 @@ class Solver:
                 u_new = np.copy(u)
                 u_new[interior] = (
                     u[interior]
-                    - 0.5 * self._Co * (u[east] - u[west]) # type: ignore
-                    + 0.5 * self._Co**2 * (u[east] - 2 * u[interior] + u[west]) # type: ignore
+                    - 0.5 * Co * (u[east] - u[west]) # type: ignore
+                    + 0.5 * Co**2 * (u[east] - 2 * u[interior] + u[west]) # type: ignore
                 )
                 return u_new
         
