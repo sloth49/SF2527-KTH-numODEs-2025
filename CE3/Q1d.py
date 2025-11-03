@@ -44,10 +44,10 @@ if __name__ == "__main__":
     # wave functions w(t; tau) and fixing the period tau
     sine_wave_tau_fixed = partial(sine_wave, tau=TAU)
     square_wave_tau_fixed = partial(square_wave, tau=TAU)
-    # bc_func = sine_wave_tau_fixed
-    # bc_plot_title = ' - sine wave BC'
-    bc_func = square_wave_tau_fixed
-    bc_plot_title = ' - square wave BC'
+    bc_func = sine_wave_tau_fixed
+    bc_plot_title = ' - sine wave BC'
+    # bc_func = square_wave_tau_fixed
+    # bc_plot_title = ' - square wave BC'
 
     # === Analytical solutions ===
     # lambda function of (x, t) representing the exact PDE solution
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     for Co, Nx in zip(Co_vals, Nx_vals):
         # Create domain with specified parameters
-        domain = make_domain(a=a, L=D, T=T_FINAL, Co=Co, Nx=Nx)
+        domain = make_domain(a=a, L_end=D, T=T_FINAL, Co=Co, Nx=Nx)
         domains.append(domain)
 
         # Initial condition
