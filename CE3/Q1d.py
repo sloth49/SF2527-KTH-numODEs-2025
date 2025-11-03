@@ -29,14 +29,14 @@ if __name__ == "__main__":
     plot_time = T_FINAL
 
     # === Fixed Delta x, varying Courant number ===
-    # Nx_fixed = 100
-    # Co_vals = [0.1, 0.3, 0.5, 0.7, 0.95, 1.0]
-    # Nx_vals = [Nx_fixed for Co in Co_vals]
+    Nx_fixed = 100
+    Co_vals = [0.1, 0.3, 0.5, 0.7, 0.95, 1.0]
+    Nx_vals = [Nx_fixed for Co in Co_vals]
 
     # === Fixed Courant No, varying Delta x (Nx) ===
-    Co_fixed = 0.9
-    Nx_vals = [80, 100, 150, 200, 250]
-    Co_vals = [Co_fixed for Co in Nx_vals]
+    # Co_fixed = 0.9
+    # Nx_vals = [80, 100, 150, 200, 250]
+    # Co_vals = [Co_fixed for Co in Nx_vals]
 
 
     # === Boundary conditions ===
@@ -44,10 +44,10 @@ if __name__ == "__main__":
     # wave functions w(t; tau) and fixing the period tau
     sine_wave_tau_fixed = partial(sine_wave, tau=TAU)
     square_wave_tau_fixed = partial(square_wave, tau=TAU)
-    bc_func = sine_wave_tau_fixed
-    bc_plot_title = ' - sine wave BC'
-    # bc_func = square_wave_tau_fixed
-    # bc_plot_title = ' - square wave BC'
+    # bc_func = sine_wave_tau_fixed
+    # bc_plot_title = ' - sine wave BC'
+    bc_func = square_wave_tau_fixed
+    bc_plot_title = ' - square wave BC'
 
     # === Analytical solutions ===
     # lambda function of (x, t) representing the exact PDE solution

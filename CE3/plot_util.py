@@ -160,7 +160,8 @@ def plot_multiple_discretisations(
         ax.grid()
         ax.set_xlabel('$x$', fontsize=10)
         ax.set_title(f'dt: {domain.dt:.3f}, Co: {Co:.3f}, Nx: {domain.Nx}')
-        ax.legend(fontsize=12)
+        if ax == axes[0, 0]:
+            ax.legend(fontsize=12)
 
     fig.suptitle(title, fontsize=16)
     fig.subplots_adjust(hspace=0.4)

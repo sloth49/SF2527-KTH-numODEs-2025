@@ -46,17 +46,17 @@ class Domain:
         return (self.Nt+1, self.Nx+1)
     
 
-    def get_meshgrid(self) -> tuple[np.ndarray, np.ndarray]:
-        return np.meshgrid(self.x, self.t, indexing='xy')
-    
-    
     def __post_init__(self):
         if (self.Nx <= 0) or (self.Nt <= 0):
             raise ValueError("Nx and Nt must be positive integers.")
         if (self.L <= 0) or (self.T <= 0):
             raise ValueError("L and T must be positive values.")
-        
+    
 
+    def get_meshgrid(self) -> tuple[np.ndarray, np.ndarray]:
+        return np.meshgrid(self.x, self.t, indexing='xy')
+    
+    
 def make_domain(a: float, L: float, T: float, Co: float, Nx: int):
     """
     For an advection PDe of the form
