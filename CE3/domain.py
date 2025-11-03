@@ -20,14 +20,16 @@ class Domain:
         Nx:     number of grid cells
         Nt:     number of time steps
     """
-    L: float
+    # L: float    
     T: float
     Nx: int
     Nt: int
+    L_end: float
+    L_start: float = 0.0
 
     @property
     def dx(self) -> float:
-        return self.L / self.Nx
+        return (self.L_end - self.L_start) / self.Nx
     
     @property
     def dt(self) -> float:
@@ -35,7 +37,7 @@ class Domain:
     
     @property
     def x(self) -> np.ndarray:
-        return np.linspace(start=0, stop=self.L, num=self.Nx+1)
+        return np.linspace(start=self.L_start, stop=self.L_end, num=self.Nx+1)
     
     @property
     def t(self) -> np.ndarray:
@@ -49,15 +51,17 @@ class Domain:
     def __post_init__(self):
         if (self.Nx <= 0) or (self.Nt <= 0):
             raise ValueError("Nx and Nt must be positive integers.")
-        if (self.L <= 0) or (self.T <= 0):
-            raise ValueError("L and T must be positive values.")
+        if (self.L_end - self.L_start <= 0) or (self.T <= 0):
+            raise ValueError("L = (L_start - L_end) and T must be positive values.")
     
 
     def get_meshgrid(self) -> tuple[np.ndarray, np.ndarray]:
         return np.meshgrid(self.x, self.t, indexing='xy')
     
     
-def make_domain(a: float, L: float, T: float, Co: float, Nx: int):
+def make_domain(
+        a: float, T: float, Co: float, Nx: int, L_end: float, L_start: float=0
+    ) -> Domain:
     """
     For an advection PDe of the form
         Ut + aUx = 0  (a = const > 0)
@@ -84,5 +88,5 @@ def make_domain(a: float, L: float, T: float, Co: float, Nx: int):
     #       = a * (T/Nt) / (L/Nx)
     #       = (a * T * Nx) / (Nt * L)
     # -> Nt = (a * T * Nx) / (Co * L)
-    Nt = int((a * T * Nx) / (Co * L))
-    return Domain(L=L, T=T, Nx=Nx, Nt=Nt)
+    Nt = int((a * T * Nx) / (Co * (L_end - L_start)))
+    return Domain(T=T, Nx=Nx, Nt=Nt, L_end=L_end, L_start=L_start)

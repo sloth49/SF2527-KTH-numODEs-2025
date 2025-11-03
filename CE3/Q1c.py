@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     # === Solve equation numerically ===
     solver = Solver(a=a)
-    domain = Domain(L=D, T=T_FINAL, Nx=Nx, Nt=Nt)
+    domain = Domain(L_end=D, T=T_FINAL, Nx=Nx, Nt=Nt)
 
     sol_numerical_labels = [scheme.value for scheme in NumericalSchemes]
     solutions_numerical_all_BCs = []
