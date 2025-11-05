@@ -7,6 +7,7 @@
 # -----------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
+# from matplotlib import axis
 from typing import Callable
 from itertools import cycle
 from domain import Domain
@@ -166,3 +167,26 @@ def plot_multiple_discretisations(
     fig.suptitle(title, fontsize=16)
     fig.subplots_adjust(hspace=0.4)
     plt.show()
+
+    
+def save2jpg(u, v, x, time_step, fig, axes):
+    [ax.clear() for ax in axes]
+    ax_u, ax_v = axes
+
+    ax_u.plot(x, u, '.-')
+    ax_u.set_title('$u$', fontsize=16)
+    ax_u.set_ylim(-0.01, 0.01)
+    ax_u.set_xlabel('$x$', fontsize=14)
+    ax_u.grid(alpha=0.7)
+
+    ax_v.plot(x, v, '-')
+    ax_v.set_title('$v$', fontsize=16)
+    ax_v.set_ylim(-0.01, 0.01)
+    ax_v.set_xlabel('$x$', fontsize=14)
+    ax_v.grid(alpha=0.7)
+
+    plt.tight_layout()
+    plt.savefig(
+        f'CE3/figures/CE3_part2b_analytical_{time_step}.jpg',
+        format='jpg',
+        dpi=300)

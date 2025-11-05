@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from solver import Solver, NumericalSchemes
 from domain import Domain
+from plot_util import save2jpg
 
 def main():
      # Problem parameters
@@ -47,33 +48,30 @@ def main():
      
 
      # Compute analytical solution
-     domain = Domain(T=T_FINAL, Nx=Nx, Nt=Nt, L_end=L1)
+     domain = Domain(T=T_FINAL, Nx=Nx, Nt=Nt, L_start=L0, L_end=L1)
      x, t = domain.x, domain.t
-     print(x.shape)
-     print(t.shape)
      p = np.zeros(shape=(len(x), len(t)))
      q = np.zeros(shape=(len(x), len(t)))
 
      for i, xn in enumerate(x):
          for j, tn in enumerate(t):
           p[i, j] = 0.5 * quad(
-               func=forcing_along_char, a=0, b=tn, args=(xn, tn, LAMBDA1)
+               func=forcing_along_char,
+               a=0, b=tn, limit=200, args=(xn, tn, LAMBDA1)
           )[0]
           q[i, j] = -0.5 * quad(
-               func=forcing_along_char, a=0, b=tn, args=(xn, tn, LAMBDA2)
+               func=forcing_along_char,
+               a=0, b=tn, limit=200, args=(xn, tn, LAMBDA2)
           )[0]
      
-     # u, v = S @ np.hstack((p, q))
      pq = np.stack((p, q), axis=0)        # shape (2, Nx, Nt)
-     print(pq.shape)
      uv = S @ pq.reshape(2, -1)           # (2, 2) @ (2, Nx*Nt) → (2, Nx*Nt)
-     print(uv.shape)
      u, v = uv.reshape(2, len(x), len(t))         # back to (2, Nx, Nt)
 
-
      # Plot analytical solution
-     fig = plt.figure(figsize=(12, 8))
-     ax = fig.add_subplot(1, 1, 1, projection='3d')
+     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 8))
+     for n, (un, vn) in enumerate(zip(u.T, v.T)):
+         save2jpg(u=un, v=vn, x=x, time_step=n, fig=fig, axes=axes)
 
 if __name__ == "__main__":
      main() 

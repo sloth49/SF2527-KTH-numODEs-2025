@@ -82,7 +82,7 @@ def Sn_DN(n: int, h: float) -> sp.csr_matrix:
 
     A = sp.diags(
         diagonals=[diag_lower, diag_main, diag_upper],
-        offsets=[-1, 0, 1], shape=(n+1, n+1), format='csr')
+        offsets=[-1, 0, 1], shape=(n+1, n+1), format='csr') # type: ignore
     
     return A / (h**2)
 
@@ -118,7 +118,7 @@ def Sn_NN(n: int, h: float) -> sp.csr_matrix:
 
     A = sp.diags(
         diagonals=[diag_lower, diag_main, diag_upper],
-        offsets=[-1, 0, 1], shape=(n+1, n+1), format='csr')
+        offsets=[-1, 0, 1], shape=(n+1, n+1), format='csr') # type: ignore
     
     return A / (h**2)
 
@@ -151,7 +151,7 @@ def f_grid(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def save2jpg(u, time_step, fig, ax):
     u_grid = u.reshape((Ny+1,Nx+1), order='C')
     ax.clear()
-    ax.plot_surface(X=X, Y=Y, Z=u_grid, cmap=cm.viridis, linewidth=0, antialiased=False)
+    ax.plot_surface(X=X, Y=Y, Z=u_grid, cmap=cm.viridis, linewidth=0, antialiased=False) # type: ignore
     ax.set_zlim(0, 100)
     ax.set_xlabel('$x$', fontsize=14)
     ax.set_ylabel('$y$', fontsize=14)
