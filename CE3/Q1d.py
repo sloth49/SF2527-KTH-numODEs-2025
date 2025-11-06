@@ -6,7 +6,7 @@
 # Date: 14 October 2025
 # -----------------------------------------------------------------------------
 from functools import partial
-from solver import Solver, NumericalSchemes
+from CE3.solver_system import Solver, NumericalSchemes
 from domain import make_domain
 import numpy as np
 from scipy import signal

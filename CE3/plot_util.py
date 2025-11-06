@@ -7,7 +7,6 @@
 # -----------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
-# from matplotlib import axis
 from typing import Callable
 from itertools import cycle
 from domain import Domain
@@ -173,7 +172,7 @@ def save2jpg(u, v, x, time_step, fig, axes):
     [ax.clear() for ax in axes]
     ax_u, ax_v = axes
 
-    ax_u.plot(x, u, '.-')
+    ax_u.plot(x, u, '-')
     ax_u.set_title('$u$', fontsize=16)
     ax_u.set_ylim(-0.01, 0.01)
     ax_u.set_xlabel('$x$', fontsize=14)

@@ -7,10 +7,8 @@
 # -----------------------------------------------------------------------------
 
 import numpy as np
-from scipy.integrate import quad
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from solver import Solver, NumericalSchemes
+from scipy.integrate import quad
 from domain import Domain
 from plot_util import save2jpg
 
@@ -25,8 +23,8 @@ def main():
      T_FINAL = 0.15
 
      # Domain discretisation
-     Nx = 100
-     Nt = 50
+     Nx = 200
+     Nt = 100
 
      # Characteristic variables
      S = np.array([[1, 1],
@@ -55,23 +53,30 @@ def main():
 
      for i, xn in enumerate(x):
          for j, tn in enumerate(t):
-          p[i, j] = 0.5 * quad(
-               func=forcing_along_char,
-               a=0, b=tn, limit=200, args=(xn, tn, LAMBDA1)
-          )[0]
-          q[i, j] = -0.5 * quad(
-               func=forcing_along_char,
-               a=0, b=tn, limit=200, args=(xn, tn, LAMBDA2)
-          )[0]
+          p[i, j] = (
+               0.5 * quad(
+                    func=forcing_along_char,
+                    a=0, b=tn, limit=200, args=(xn, tn, LAMBDA1)
+               )[0]
+          )
+          q[i, j] = (
+              -0.5 * quad(
+                    func=forcing_along_char,
+                    a=0, b=tn, limit=200, args=(xn, tn, LAMBDA2)
+               )[0]
+          )
      
      pq = np.stack((p, q), axis=0)        # shape (2, Nx, Nt)
      uv = S @ pq.reshape(2, -1)           # (2, 2) @ (2, Nx*Nt) → (2, Nx*Nt)
      u, v = uv.reshape(2, len(x), len(t))         # back to (2, Nx, Nt)
+     filename = f'CE3/analytical_sol_Nx{Nx}_Nt{Nt}'
+     np.savez(filename, u, v)
 
      # Plot analytical solution
      fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 8))
      for n, (un, vn) in enumerate(zip(u.T, v.T)):
          save2jpg(u=un, v=vn, x=x, time_step=n, fig=fig, axes=axes)
+
 
 if __name__ == "__main__":
      main() 
