@@ -6,7 +6,7 @@
 # Date: 14 October 2025
 # -----------------------------------------------------------------------------
 from functools import partial
-from CE3.solver_system import Solver, NumericalSchemes
+from CE3.solver_system import SolverSystem, NumericalSchemes
 from domain import make_domain
 import numpy as np
 from scipy import signal
@@ -58,7 +58,7 @@ if __name__ == "__main__":
                            else 0)
 
     # === Solve equation numerically ===
-    solver = Solver(a=a)
+    solver = SolverSystem(a=a)
     domains = []
     solutions_numerical_all_domains = []
 

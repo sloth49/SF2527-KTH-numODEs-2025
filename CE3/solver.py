@@ -48,7 +48,7 @@ class Solver:
     _left_bc: Callable[[float], float] | None
     _solver_called: bool | None
 
-    def __init__(self, a :float = 1) -> None:
+    def __init__(self, a: float = 1) -> None:
         if a <= 0:
             raise ValueError("Advection speed 'a' must be positive.")
         self._a = a

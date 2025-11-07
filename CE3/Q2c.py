@@ -7,10 +7,8 @@
 # -----------------------------------------------------------------------------
 
 import numpy as np
-from scipy.integrate import quad
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from solver_system import Solver, NumericalSchemes
+from solver_system import SolverSystem, NumericalSchemes
 from domain import Domain
 
 def main():
@@ -19,11 +17,41 @@ def main():
      L1 = 0.7
      Fr = 0.35
      ALPHA = 1 / Fr
-     LAMBDA1 = 1 + ALPHA
-     LAMBDA2 = 1 - ALPHA
      T_FINAL = 0.15
 
+     # Forcing function
+     s = (lambda csi:
+          np.where(
+               np.abs(csi) < 1 / 20,
+               np.sin(20 * np.pi * csi),
+               0
+          )
+     )
+     r = (lambda tau:
+          np.where(
+               np.sin((40 * np.pi * tau) + (np.pi / 6)) > 0.5,
+               1,
+               0
+          )
+     )
+     f1 = lambda x, t: np.zeros(shape=(len(x), len(t)))
+     f2 = lambda x, t: s(x) * r(t)
+     F = [f1, f2]
 
+     # Domain discretisation
+     Nx = 100
+     Nt = 100
+     domain = Domain(T=T_FINAL, Nx=Nx, Nt=Nt, L_start=L0, L_end=L1)
+
+     # PDE setup
+     init_cond = np.zeros(shape=(len(F), len(domain.x)))
+     A = np.array([[1, ALPHA],
+                   [ALPHA, 1]])
+     solver = SolverSystem(A=A, F=F)
+     soln = solver.solve_pde(
+          domain=domain,
+          initial_condition=init_cond,
+          num_scheme=NumericalSchemes.UPWIND)
 
 
 if __name__ == "__main__":

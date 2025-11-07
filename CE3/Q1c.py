@@ -6,7 +6,7 @@
 # Date: 14 October 2025
 # -----------------------------------------------------------------------------
 from functools import partial
-from CE3.solver_system import Solver, NumericalSchemes
+from CE3.solver_system import SolverSystem, NumericalSchemes
 from domain import Domain
 import numpy as np
 from scipy import signal
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     IC_allzero = np.zeros(shape=Nx+1)
 
     # === Solve equation numerically ===
-    solver = Solver(a=a)
+    solver = SolverSystem(a=a)
     domain = Domain(L_end=D, T=T_FINAL, Nx=Nx, Nt=Nt)
 
     sol_numerical_labels = [scheme.value for scheme in NumericalSchemes]
