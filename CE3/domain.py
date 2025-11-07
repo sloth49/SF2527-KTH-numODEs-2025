@@ -56,7 +56,7 @@ class Domain:
     
 
     def get_meshgrid(self) -> tuple[np.ndarray, np.ndarray]:
-        return np.meshgrid(self.x, self.t, indexing='xy')
+        return np.meshgrid(self.x, self.t, indexing='ij')
     
     
 def make_domain(

@@ -75,7 +75,7 @@ class SolverSystem:
         Returns vector-valued forcing function F(x,y) on a X,Y mesh grid.
         Shape: (DIM, len(x), len(y))
         """
-        X, Y = np.meshgrid(self._domain.x, self._domain.t, indexing='ij') # type: ignore
+        X, Y = self._domain.get_meshgrid() # type: ignore
         return np.stack([f(X, Y) for f in self._F]) # type: ignore
 
 

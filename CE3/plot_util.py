@@ -7,6 +7,7 @@
 # -----------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from typing import Callable
 from itertools import cycle
 from domain import Domain
@@ -196,7 +197,7 @@ def plot_system_specified_time(
         plot_time: float,
         sols_all_schemes: list[np.ndarray],
         scheme_labels: list[str]
-    ):
+    ) -> None:
     # Extract numerical solution at specified time, list of one item per scheme 
     x, t = domain.x, domain.t
     plot_time_index = np.argmin(np.abs(plot_time - t))
@@ -219,3 +220,22 @@ def plot_system_specified_time(
         ax.set_xlabel('$x$', fontsize=14)
 
     plt.show()
+
+
+def plot_system_3d(
+        domain: Domain,
+        sols_all_schemes: list[np.ndarray],
+        scheme_names: list[str]
+    ) -> None:
+
+    X, Y = domain.get_meshgrid()
+
+    for sol_this_scheme, scheme_name in zip(sols_all_schemes, scheme_names):
+        U = sol_this_scheme[0]
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        # ax.plot_wireframe(X, Y, U)
+        # ax.contour(X, Y, U, levels=20)
+        ax.plot_surface(X, Y, U)
+        ax.set_title(scheme_name)
+        plt.show()
