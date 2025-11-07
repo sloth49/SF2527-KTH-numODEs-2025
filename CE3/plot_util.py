@@ -12,6 +12,8 @@ from typing import Callable
 from itertools import cycle
 from domain import Domain
 from math import ceil
+import plotly.graph_objects as go
+
 
 def plot_time_level_samples(
         x: np.ndarray, t: np.ndarray, u: np.ndarray, Nt: int,
@@ -227,15 +229,45 @@ def plot_system_3d(
         sols_all_schemes: list[np.ndarray],
         scheme_names: list[str]
     ) -> None:
-
     X, Y = domain.get_meshgrid()
 
     for sol_this_scheme, scheme_name in zip(sols_all_schemes, scheme_names):
         U = sol_this_scheme[0]
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        # ax.plot_wireframe(X, Y, U)
-        # ax.contour(X, Y, U, levels=20)
-        ax.plot_surface(X, Y, U)
-        ax.set_title(scheme_name)
-        plt.show()
+
+        fig = go.Figure(
+            data=[
+                go.Surface(
+                    x=X,
+                    y=Y,
+                    z=U,
+                    colorscale='Viridis',
+                    opacity=0.8,        # semi-transparent
+                    showscale=True
+                )
+            ]
+        )
+
+        fig.add_trace(
+            go.Scatter3d(
+                x=X.flatten(),
+                y=Y.flatten(),
+                z=U.flatten(),
+                mode='markers',
+                marker=dict(size=3, color=U.flatten(), colorscale='Viridis'),
+                name='grid points'
+            )
+        )
+
+
+        fig.update_layout(
+            title=scheme_name,
+            scene=dict(
+                xaxis_title='x',
+                yaxis_title='y',
+                zaxis_title='u(x,y)',
+                aspectratio=dict(x=1, y=1, z=0.5)
+            ),
+            margin=dict(l=0, r=0, b=0, t=40)
+        )
+
+        fig.show()
