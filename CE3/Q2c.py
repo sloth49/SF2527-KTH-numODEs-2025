@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from solver_system import SolverSystem, NumericalSchemes
 from domain import Domain
+from plot_util import plot_system_specified_time
 
 def main():
      # Problem parameters
@@ -39,8 +40,8 @@ def main():
      F = [f1, f2]
 
      # Domain discretisation
-     Nx = 100
-     Nt = 100
+     Nx = 300 #400
+     Nt = 300 #220
      domain = Domain(T=T_FINAL, Nx=Nx, Nt=Nt, L_start=L0, L_end=L1)
 
      # PDE setup
@@ -48,10 +49,20 @@ def main():
      A = np.array([[1, ALPHA],
                    [ALPHA, 1]])
      solver = SolverSystem(A=A, F=F)
-     soln = solver.solve_pde(
-          domain=domain,
-          initial_condition=init_cond,
-          num_scheme=NumericalSchemes.UPWIND)
+
+     sols_all_schemes = []
+     labels = [scheme.value for scheme in NumericalSchemes]
+     for scheme in NumericalSchemes:
+          sol_this_scheme = solver.solve_pde(
+               domain=domain,
+               initial_condition=init_cond,
+               num_scheme=scheme)
+          sols_all_schemes.append(sol_this_scheme)
+     
+     # Plot solutions
+     plot_system_specified_time(
+          domain=domain, plot_time=T_FINAL,
+          sols_all_schemes=sols_all_schemes, scheme_labels=labels)
 
 
 if __name__ == "__main__":

@@ -189,3 +189,33 @@ def save2jpg(u, v, x, time_step, fig, axes):
         f'CE3/figures/CE3_part2b_analytical_{time_step}.jpg',
         format='jpg',
         dpi=300)
+
+
+def plot_system_specified_time(
+        domain: Domain,
+        plot_time: float,
+        sols_all_schemes: list[np.ndarray],
+        scheme_labels: list[str]
+    ):
+    # Extract numerical solution at specified time, list of one item per scheme 
+    x, t = domain.x, domain.t
+    plot_time_index = np.argmin(np.abs(plot_time - t))
+    sols_all_schemes_at_t = [sol[:, :, plot_time_index] for sol in sols_all_schemes]
+
+    # Plot results
+    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8,6))
+    var_names = ['$u$', '$v$']
+
+    for sol_this_scheme_at_t, scheme_label in zip(sols_all_schemes_at_t, scheme_labels):
+        markers = cycle(('o', 'v', 's', '*', 'D', 'X', '^'))
+        for ax, var in zip(axes, sol_this_scheme_at_t):
+            ax.plot(x, var, label=scheme_label,
+                    marker=next(markers), markersize=4, linewidth=0.2)
+            
+    for ax, var_name in zip(axes, var_names):
+        ax.grid()
+        ax.legend(fontsize=12)
+        ax.set_title(var_name, fontsize=16, pad=10)
+        ax.set_xlabel('$x$', fontsize=14)
+
+    plt.show()

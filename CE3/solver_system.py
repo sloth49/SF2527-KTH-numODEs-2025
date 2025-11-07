@@ -43,7 +43,7 @@ class SolverSystem:
 
     def __init__(
             self, A: np.ndarray,
-            F: list[Callable[[float, float], float] | float]
+            F: list[Callable[[np.ndarray, np.ndarray], float] | float]
         ) -> None:
         if not A.shape == (self.DIM, self.DIM):
             raise ValueError(f"A matrix must be a {self.DIM}x{self.DIM} matrix")
