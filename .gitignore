@@ -1,6 +1,5 @@
 CE1/CE1ht25.pdf
-*.jpg
-*.mp4
-*.npz
 CE2_code_submission/*.*
+CE2/figures
+CE3/figures
 TODO.txt

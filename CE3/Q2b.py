@@ -23,8 +23,8 @@ def main():
      T_FINAL = 0.15
 
      # Domain discretisation
-     Nx = 200
-     Nt = 100
+     Nx = 400
+     Nt = 200
 
      # Characteristic variables
      S = np.array([[1, 1],

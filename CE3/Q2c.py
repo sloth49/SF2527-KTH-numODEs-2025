@@ -21,16 +21,16 @@ def main(task: str):
      T_FINAL = 0.15
 
      # Forcing function
-     s = (lambda csi:
+     s = (lambda x:
           np.where(
-               np.abs(csi) < 1 / 20,
-               np.sin(20 * np.pi * csi),
+               np.abs(x) < 1 / 20,
+               np.sin(20 * np.pi * x),
                0
           )
      )
-     r = (lambda tau:
+     r = (lambda t:
           np.where(
-               np.sin((40 * np.pi * tau) + (np.pi / 6)) > 0.5,
+               np.sin((40 * np.pi * t) + (np.pi / 6)) > 0.5,
                1,
                0
           )
@@ -40,27 +40,39 @@ def main(task: str):
      F = [f1, f2]
 
      # Domain discretisation
+     # Nx = 400
+     # Nt = 220
      Nx = 400
-     Nt = 220
+     Nt = 200
      domain = Domain(T=T_FINAL, Nx=Nx, Nt=Nt, L_start=L0, L_end=L1)
 
-     # PDE setup
+     # Numerical solution
      init_cond = np.zeros(shape=(len(F), len(domain.x)))
      A = np.array([[1, ALPHA],
                    [ALPHA, 1]])
      solver = SolverSystem(A=A, F=F)
-
      sols_all_schemes = []
      labels = [scheme.value for scheme in NumericalSchemes]
      for scheme in NumericalSchemes:
           sol_this_scheme = solver.solve_pde(
                domain=domain,
                initial_condition=init_cond,
-               num_scheme=scheme)
+               num_scheme=scheme,
+               CFL_override=True)
           sols_all_schemes.append(sol_this_scheme)
 
      # Plot solutions
      if task == 'plot_final':
+
+          # Load analytical solution
+          fname_analytic = f'CE3/results/analytical_sol_Nx{Nx}_Nt{Nt}.npz'
+          sol_analytical= np.load(fname_analytic)
+          u, v = sol_analytical['arr_0'], sol_analytical['arr_1']
+          sol_analytical = np.stack((u, v), axis=0)
+          labels.append('Analytical')
+          sols_all_schemes.append(sol_analytical)
+
+          # Plot numerical and analytical solutions          
           plot_system_specified_time(
                domain=domain, plot_time=T_FINAL,
                sols_all_schemes=sols_all_schemes, scheme_labels=labels)
@@ -71,6 +83,6 @@ def main(task: str):
 
 
 if __name__ == "__main__":
-     # task = 'plot_final'
-     task = 'plot_3d'
+     task = 'plot_final'
+     # task = 'plot_3d'
      main(task) 

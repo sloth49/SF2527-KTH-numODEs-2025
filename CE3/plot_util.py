@@ -210,17 +210,17 @@ def plot_system_specified_time(
     var_names = ['$u$', '$v$']
 
     for sol_this_scheme_at_t, scheme_label in zip(sols_all_schemes_at_t, scheme_labels):
-        markers = cycle(('o', 'v', 's', '*', 'D', 'X', '^'))
         for ax, var in zip(axes, sol_this_scheme_at_t):
             ax.plot(x, var, label=scheme_label,
-                    marker=next(markers), markersize=4, linewidth=0.2)
-            
+                    marker='.', markersize=4, linewidth=0.3)
     for ax, var_name in zip(axes, var_names):
         ax.grid()
-        ax.legend(fontsize=12)
-        ax.set_title(var_name, fontsize=16, pad=10)
-        ax.set_xlabel('$x$', fontsize=14)
+        ax.set_ylabel(var_name, fontsize=18, rotation=0, labelpad=15)
+        ax.set_ylim(bottom=0.008, top=-0.008)
 
+    axes[0].legend(fontsize=12)
+    axes[1].set_xlabel('$x$', fontsize=18, labelpad=15)
+    fig.suptitle(f'Numerical solution at time t={plot_time}', fontsize=14)
     plt.show()
 
 

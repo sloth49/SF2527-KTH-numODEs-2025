@@ -36,6 +36,7 @@ class SolverSystem:
     _Lambda_minus: np.ndarray # shape: (DIM, DIM)
     _char_speeds: np.ndarray # shape: (DIM,)
     _Co: float | None
+    CFL_override: bool
     _domain: Domain | None
     _F: list[Callable[[np.ndarray, np.ndarray], float] | float]
     _S: np.ndarray # shape: (DIM, DIM)
@@ -57,6 +58,7 @@ class SolverSystem:
         self._Lambda_minus = np.where((Lambda < 0), Lambda, 0)
         self.initial_cond = None
         self._Co = None
+        self.CFL_override = False
         self._domain = None
         self._solver_called = None
         self.sol = None
@@ -75,15 +77,19 @@ class SolverSystem:
         Returns vector-valued forcing function F(x,y) on a X,Y mesh grid.
         Shape: (DIM, len(x), len(y))
         """
-        X, Y = self._domain.get_meshgrid() # type: ignore
-        return np.stack([f(X, Y) for f in self._F]) # type: ignore
+        if self._domain == None:
+            raise ValueError("Cannot evaluate forcing function if domain is not set")
+        else:
+            X, Y = self._domain.get_meshgrid() # type: ignore
+            return np.stack([f(X, Y) for f in self._F]) # type: ignore
 
 
     def solve_pde(
             self,
             domain: Domain,
             initial_condition: np.ndarray,
-            num_scheme: NumericalSchemes
+            num_scheme: NumericalSchemes,
+            CFL_override: bool = False
             ) -> np.ndarray:
         """
         Solve the PDE
@@ -94,7 +100,7 @@ class SolverSystem:
         self._domain = domain
 
         # check stability, exit if not ok.
-        if not self.cfl_condition_satisfied():
+        if not (CFL_override or self.cfl_condition_satisfied()):
             print(f"CFL condition not satisfied (Co={self._Co}). "
                   + "Stopping the program.")
             sys.exit()
@@ -161,16 +167,20 @@ class SolverSystem:
         u_old = self.initial_cond
             
         # Time marching loop
-        for t_step_curr in range(1, domain.Nt+1):            
+        for t_step_curr in range(1, domain.Nt+1):
+
             t_curr = domain.t[t_step_curr]      # n+1 time level
             F_old = F_grid[:, :, t_step_curr-1]  # F^n
+
             if num_scheme == NumericalSchemes.UPWIND:
                 u_curr = step_UW(u=u_old, F_old=F_old) # type: ignore
             elif num_scheme == NumericalSchemes.LAX_WENDROFF:
                 F_curr = F_grid[:, :, t_step_curr]  # F^{n+1}
                 u_curr = step_LW(u=u_old, F=F_old, F_new=F_curr) # type: ignore
+
             u_curr[:, 0] = 2 * u_curr[:, 1] - u_curr[:, 2]    # Numerical BC at LHS boundary
             u_curr[:, -1] = 2 * u_curr[:, -2] - u_curr[:, -3]    # Numerical BC at RHS boundary
+
             self.sol[:, :, t_step_curr] = u_curr     # store the result
             u_old = u_curr
         
