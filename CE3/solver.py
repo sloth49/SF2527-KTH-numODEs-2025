@@ -38,7 +38,7 @@ class Solver:
         _left_bc (`Callable[[float], float]`):
             Function of time returning the left boundary condition, u(0,t)
         u (ndarray):
-            solution array, shape `(domain.t, domain.x)
+            solution array, shape `(len(domain.t), len(domain.x))`
     """
     initial_cond: np.ndarray | None
     u: np.ndarray | None

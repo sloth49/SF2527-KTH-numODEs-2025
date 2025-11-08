@@ -19,13 +19,25 @@ class NumericalSchemes(Enum):
 
 class SolverSystem:
     """
-    A finite difference solver to solve conservation equations of the type:
-                
-        where 
+    A finite difference solver for linear PDE systems of the type:
+            v_t + A v_x = F
+        where:
+            v(x,t) = (v1, v2, ..., vn)
+            A = n x n matrix of real coefficients
+            F(x,t) = (f1, f2, ..., fn) forcing function
 
     Parameters:
+        A (np.ndarray):
+            Matrix of coefficients, shape`(n, n)`
+        F (list[Callable[[np.ndarray, np.ndarray], float] | float]):
+            RHS of PDE, given as list of functions of x,t, where x and t
+            are given as numpy arrays.
     
     Attributes:
+        DIM (int):
+            No of variables n in system
+        _Co (float):
+            Courant number, calculated as max(eigvals(A)) * dt / dx
     """
     DIM = 2
     initial_cond: np.ndarray | None # shape: (DIM, Nx+1)
@@ -92,18 +104,33 @@ class SolverSystem:
             CFL_override: bool = False
             ) -> np.ndarray:
         """
-        Solve the PDE
+        Solve the system of PDEs with a specified numerical scheme.
 
         Parameters:
+            domain (Domain):
+                Domain of integration
+            initial_condition (np.ndarray):
+                Vector of initial conditions, (v1_0(x), v2_0(x),...).
+                Shape:`(DIM, Nx+1)`.
+            num_scheme (NumericalSchemes):
+                The scheme of integration.
+            CFL_override (bool):
+                If`True`, it allows running the solver with Courant number > 1
+            
         Returns:
+            sol (np.ndarray):
+                Array of numerical solutions over the specified domain. Each
+                element of the first dimension represents one element of the
+                vector-valued solution. Shape`(DIM, Nx+1, Nt+1)`
         """
         self._domain = domain
 
         # check stability, exit if not ok.
-        if not (CFL_override or self.cfl_condition_satisfied()):
-            print(f"CFL condition not satisfied (Co={self._Co}). "
-                  + "Stopping the program.")
-            sys.exit()
+        if not self.cfl_condition_satisfied():
+            if not CFL_override:
+                print(f"CFL condition not satisfied (Co={self._Co}). "
+                    + "Stopping the program.")
+                sys.exit()
         print("Solving the PDE with the " + num_scheme.value
               + f" scheme, Courant No: {self._Co}.")
         self._solver_called = True

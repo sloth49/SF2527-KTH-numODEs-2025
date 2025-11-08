@@ -12,7 +12,7 @@ from solver_system import SolverSystem, NumericalSchemes
 from domain import Domain
 from plot_util import plot_system_specified_time, plot_system_3d
 
-def main(task: str):
+def run_task(task: str):
      # Problem parameters
      L0 = -0.4
      L1 = 0.7
@@ -40,10 +40,8 @@ def main(task: str):
      F = [f1, f2]
 
      # Domain discretisation
-     # Nx = 400
-     # Nt = 220
      Nx = 400
-     Nt = 200
+     Nt = 220
      domain = Domain(T=T_FINAL, Nx=Nx, Nt=Nt, L_start=L0, L_end=L1)
 
      # Numerical solution
@@ -63,7 +61,6 @@ def main(task: str):
 
      # Plot solutions
      if task == 'plot_final':
-
           # Load analytical solution
           fname_analytic = f'CE3/results/analytical_sol_Nx{Nx}_Nt{Nt}.npz'
           sol_analytical= np.load(fname_analytic)
@@ -83,6 +80,6 @@ def main(task: str):
 
 
 if __name__ == "__main__":
-     task = 'plot_final'
-     # task = 'plot_3d'
-     main(task) 
+     # task = 'plot_final'
+     task = 'plot_3d'
+     run_task(task) 

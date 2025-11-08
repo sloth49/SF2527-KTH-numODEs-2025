@@ -208,11 +208,15 @@ def plot_system_specified_time(
     # Plot results
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8,6))
     var_names = ['$u$', '$v$']
-
-    for sol_this_scheme_at_t, scheme_label in zip(sols_all_schemes_at_t, scheme_labels):
-        for ax, var in zip(axes, sol_this_scheme_at_t):
+    
+    for i_var, ax in enumerate(axes):
+        markers = cycle(('v', '^', '.'))
+        marker_sizes = cycle((3, 3, 4))
+        for sol_this_scheme_at_t, scheme_label in zip(sols_all_schemes_at_t, scheme_labels):
+            marker=next(markers)
+            var = sol_this_scheme_at_t[i_var]
             ax.plot(x, var, label=scheme_label,
-                    marker='.', markersize=4, linewidth=0.3)
+                    marker=next(markers), markersize=next(marker_sizes), linewidth=0.3)
     for ax, var_name in zip(axes, var_names):
         ax.grid()
         ax.set_ylabel(var_name, fontsize=18, rotation=0, labelpad=15)
@@ -229,6 +233,19 @@ def plot_system_3d(
         sols_all_schemes: list[np.ndarray],
         scheme_names: list[str]
     ) -> None:
+    """
+    Generates interactive 3d plots in HTML format, which can be rotated / zoomed in
+    using your mouse.
+
+    Parameters:
+        domain (Domain):
+            The integration domain of the PDE
+        sols_all_schemes (list[np.ndarray]):
+            A list of Numpy arrays representing the solutions for different
+            numerical schemes / analytical. Item shape: (No of vars, Nx+1, Nt+1)
+        scheme_names (list[str]):
+            List of names for each scheme provided in sols_all_schemes
+    """
     X, Y = domain.get_meshgrid()
 
     for sol_this_scheme, scheme_name in zip(sols_all_schemes, scheme_names):
@@ -263,8 +280,8 @@ def plot_system_3d(
             title=scheme_name,
             scene=dict(
                 xaxis_title='x',
-                yaxis_title='y',
-                zaxis_title='u(x,y)',
+                yaxis_title='t',
+                zaxis_title='u(x,t)',
                 aspectratio=dict(x=1, y=1, z=0.5)
             ),
             margin=dict(l=0, r=0, b=0, t=40)
