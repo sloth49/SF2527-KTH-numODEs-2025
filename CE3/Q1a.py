@@ -20,9 +20,13 @@ def square_wave(t: float, tau: float):
 
 
 def main(boundary_condition):
+    """
+    Plot the analytical solution ton CE3 part 1, for square wave
+    and sine wave boundary conditions
+    """
     # === PDE to solve ===
-    # advection equation with constant adv. speed
-    # u_t + C u_x = 0
+    # advection equation with constant adv. speed:
+    #    u_t + C u_x = 0
 
     # === Problem set up ===
     D = 10.0      # spatial domain length
@@ -66,5 +70,5 @@ def main(boundary_condition):
 
 
 if __name__ == "__main__":
-    main(square_wave)
-    # main(sine_wave)
+    # main(square_wave)
+    main(sine_wave)

@@ -73,7 +73,8 @@ class Solver:
             domain: Domain,
             initial_condition: np.ndarray,
             left_bc: Callable[[float], float],
-            num_scheme: NumericalSchemes
+            num_scheme: NumericalSchemes,
+            CFL_override: bool = False
             ) -> np.ndarray:
         """
         Solve the PDE in U(x,t):
@@ -101,8 +102,9 @@ class Solver:
 
         # check stability, exit if not ok.
         if not self.cfl_condition_satisfied():
-            print(f"CFL condition not satisfied (Co={self._Co}). Stopping the program.")
-            sys.exit()
+            if not CFL_override:
+                print(f"CFL condition not satisfied (Co={self._Co}). Stopping the program.")
+                sys.exit()
         Co = self._Co   # Local alias for readability
         print("Solving the PDE with the "
               + num_scheme.value

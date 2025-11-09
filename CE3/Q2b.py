@@ -28,6 +28,12 @@ def forcing_integral(xn, tn, char_speed, s, r, t0=0, N=400):
 
 
 def main():
+     """
+     Computes the analytical solution and saves results to file.
+     The file is a dictionary-type archive, with 'arr_0', 'arr_1', ... keys
+     to retrieve the solution components. Uses Simpson's rule on discretised
+     values to calculate the integral on the RHS of the equation.
+     """
      # Problem parameters
      L0 = -0.4
      L1 = 0.7

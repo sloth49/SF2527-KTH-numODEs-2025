@@ -6,7 +6,7 @@
 # Date: 14 October 2025
 # -----------------------------------------------------------------------------
 from functools import partial
-from CE3.solver_system import SolverSystem, NumericalSchemes
+from solver import Solver, NumericalSchemes
 from domain import make_domain
 import numpy as np
 from scipy import signal
@@ -20,7 +20,7 @@ def square_wave(t: float, tau: float):
     return float(signal.square(2 * np.pi * t / tau))
 
 
-if __name__ == "__main__":
+def main(func, Co_vals, Nx_vals):
     # Problem parameters
     TAU = 2.0
     D = 10.0
@@ -28,37 +28,26 @@ if __name__ == "__main__":
     T_FINAL = 4.0
     plot_time = T_FINAL
 
-    # === Fixed Delta x, varying Courant number ===
-    Nx_fixed = 100
-    Co_vals = [0.1, 0.3, 0.5, 0.7, 0.95, 1.0]
-    Nx_vals = [Nx_fixed for Co in Co_vals]
-
-    # === Fixed Courant No, varying Delta x (Nx) ===
-    # Co_fixed = 0.9
-    # Nx_vals = [80, 100, 150, 200, 250]
-    # Co_vals = [Co_fixed for Co in Nx_vals]
-
-
     # === Boundary conditions ===
     # Create sine/square wave functions of time only u(0,t) = g(t), by taking
     # wave functions w(t; tau) and fixing the period tau
-    sine_wave_tau_fixed = partial(sine_wave, tau=TAU)
-    square_wave_tau_fixed = partial(square_wave, tau=TAU)
-    bc_func = sine_wave_tau_fixed
-    bc_plot_title = ' - sine wave BC'
-    # bc_func = square_wave_tau_fixed
-    # bc_plot_title = ' - square wave BC'
+    bc_func_tau_fixed = partial(func, tau=TAU)
+    # bc_func = sine_wave_tau_fixed
+    if func == sine_wave:
+        bc_plot_title = ' - sine wave BC'
+    elif func == square_wave:
+        bc_plot_title = ' - square wave BC'
 
     # === Analytical solutions ===
     # lambda function of (x, t) representing the exact PDE solution
     # u(x,t) = g(t - x/a) for the given boundary condition (g_sine or g_square)
-    sol_analytical_func = (lambda x, time, func=bc_func:
+    sol_analytical_func = (lambda x, time, func=bc_func_tau_fixed:
                            func(t = (time -  x / a))
                            if x < a * time
                            else 0)
 
     # === Solve equation numerically ===
-    solver = SolverSystem(a=a)
+    solver = Solver(a=a)
     domains = []
     solutions_numerical_all_domains = []
 
@@ -77,14 +66,15 @@ if __name__ == "__main__":
                 solver.solve_pde(
                     domain=domain,
                     initial_condition=IC_allzero,
-                    left_bc=bc_func,
-                    num_scheme=scheme
+                    left_bc=bc_func_tau_fixed,
+                    num_scheme=scheme,
+                    CFL_override=True
                 )
             )
         solutions_numerical_all_domains.append(solutions_numerical_this_domain)
     
     # === Plot analytical and numerical solutions for each BC type ===
-    plot_title = f'$u(x,{T_FINAL:.2f})$' + bc_plot_title
+    plot_title = f'$u(x,{T_FINAL:.2f})$' + bc_plot_title # type: ignore
     sol_numerical_labels = [scheme.value for scheme in NumericalSchemes]
     plot_multiple_discretisations(
         domains=domains,
@@ -95,3 +85,20 @@ if __name__ == "__main__":
         sol_num_labels=sol_numerical_labels,
         title=plot_title
     )
+
+
+if __name__ == "__main__":
+
+    # # === Fixed Delta x, varying Courant number ===
+    # Nx_fixed = 100
+    # # Co_vals = [0.1, 0.3, 0.5, 0.7, 0.95, 1.0]
+    # Co_vals = [0.3, 0.5, 0.7, 0.95, 1.0, 1.001]
+    # Nx_vals = [Nx_fixed for Co in Co_vals]
+
+    # === Fixed Courant No, varying Delta x (Nx) ===
+    Co_fixed = 0.9
+    Nx_vals = [80, 100, 150, 200, 250, 300]
+    Co_vals = [Co_fixed for Co in Nx_vals]
+
+    # main(sine_wave, Co_vals, Nx_vals)
+    main(square_wave, Co_vals, Nx_vals)

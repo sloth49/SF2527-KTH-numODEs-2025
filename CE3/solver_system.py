@@ -58,6 +58,7 @@ class SolverSystem:
             self, A: np.ndarray,
             F: list[Callable[[np.ndarray, np.ndarray], float] | float]
         ) -> None:
+
         if not A.shape == (self.DIM, self.DIM):
             raise ValueError(f"A matrix must be a {self.DIM}x{self.DIM} matrix")
         self._A = A
@@ -79,10 +80,10 @@ class SolverSystem:
     def cfl_condition_satisfied(self) -> bool:
         if self._domain is None:
             raise ValueError("Domain not set. Cannot check CFL condition.")
-        else:
-            max_char_speed = np.max(np.abs(self._char_speeds))
-            self._Co = (max_char_speed * self._domain.dt) / self._domain.dx
-            return (self._Co <= 1) # type: ignore
+        max_char_speed = np.max(np.abs(self._char_speeds))
+        self._Co = (max_char_speed * self._domain.dt) / self._domain.dx
+        return (self._Co <= 1) # type: ignore
+    
     
     def get_Fgrid(self):
         """
@@ -91,9 +92,8 @@ class SolverSystem:
         """
         if self._domain == None:
             raise ValueError("Cannot evaluate forcing function if domain is not set")
-        else:
-            X, Y = self._domain.get_meshgrid() # type: ignore
-            return np.stack([f(X, Y) for f in self._F]) # type: ignore
+        X, Y = self._domain.get_meshgrid() # type: ignore
+        return np.stack([f(X, Y) for f in self._F]) # type: ignore
 
 
     def solve_pde(
@@ -125,7 +125,7 @@ class SolverSystem:
         """
         self._domain = domain
 
-        # check stability, exit if not ok.
+        # Check stability, exit if not ok.
         if not self.cfl_condition_satisfied():
             if not CFL_override:
                 print(f"CFL condition not satisfied (Co={self._Co}). "
@@ -135,25 +135,18 @@ class SolverSystem:
               + f" scheme, Courant No: {self._Co}.")
         self._solver_called = True
 
+        # === Set up the scheme to be used in the time marching loop ===
         mu = domain.dt / domain.dx
         dt = self._domain.dt    # local alias for readability
         F_grid = self.get_Fgrid()   # forcing function over x-t domain
-        self.initial_cond = initial_condition
-        # initialise solution container
-        self.sol = np.zeros(
-            shape=(
-                initial_condition.shape[0],
-                len(domain.x),
-                len(domain.t)
-            )
-        )
+
         # Create groups of node indices for scheme stencil.
         # To be used on time-level arrays of shape (DIM, len(x))
         interior = slice(1, -1)
         east = slice(2, None)
         west = slice(None, -2)
         
-        # === Switch the solver to the specified numerical scheme ===
+        # Switch the solver to the specified numerical scheme
         if num_scheme == NumericalSchemes.UPWIND:
             S_inv = np.linalg.inv(self._S)
             A_plus = self._S @ self._Lambda_plus @ S_inv
@@ -166,8 +159,7 @@ class SolverSystem:
                     - mu * A_minus @ (u[:, east] - u[:, interior])
                     + dt * F_old[:, interior]
                 )
-                return u_new
-        
+                return u_new        
         elif num_scheme == NumericalSchemes.LAX_WENDROFF:
             A = self._A     # local alias for readability
             def step_LW(
@@ -189,10 +181,21 @@ class SolverSystem:
         else:
                 raise ValueError(f"Unkonwn numerical scheme: {num_scheme}")
 
+        # === Time integration ===        
+        # initialise solution container
+        self.sol = np.zeros(
+            shape=(
+                initial_condition.shape[0],
+                len(domain.x),
+                len(domain.t)
+            )
+        )
+
         # Initial condition
+        self.initial_cond = initial_condition
         self.sol[:, :, 0] = self.initial_cond
         u_old = self.initial_cond
-            
+        
         # Time marching loop
         for t_step_curr in range(1, domain.Nt+1):
 
@@ -205,8 +208,9 @@ class SolverSystem:
                 F_curr = F_grid[:, :, t_step_curr]  # F^{n+1}
                 u_curr = step_LW(u=u_old, F=F_old, F_new=F_curr) # type: ignore
 
-            u_curr[:, 0] = 2 * u_curr[:, 1] - u_curr[:, 2]    # Numerical BC at LHS boundary
-            u_curr[:, -1] = 2 * u_curr[:, -2] - u_curr[:, -3]    # Numerical BC at RHS boundary
+            # Impose numerical BC
+            u_curr[:, 0] = 2 * u_curr[:, 1] - u_curr[:, 2]    # LHS boundary
+            u_curr[:, -1] = 2 * u_curr[:, -2] - u_curr[:, -3]    # RHS boundary
 
             self.sol[:, :, t_step_curr] = u_curr     # store the result
             u_old = u_curr

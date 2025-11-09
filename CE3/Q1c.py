@@ -6,7 +6,7 @@
 # Date: 14 October 2025
 # -----------------------------------------------------------------------------
 from functools import partial
-from CE3.solver_system import SolverSystem, NumericalSchemes
+from solver import Solver, NumericalSchemes
 from domain import Domain
 import numpy as np
 from scipy import signal
@@ -20,7 +20,7 @@ def square_wave(t: float, tau: float):
     return float(signal.square(2 * np.pi * t / tau))
 
 
-if __name__ == "__main__":
+def main():
     # Problem parameters
     TAU = 2.0
     D = 10.0
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     IC_allzero = np.zeros(shape=Nx+1)
 
     # === Solve equation numerically ===
-    solver = SolverSystem(a=a)
+    solver = Solver(a=a)
     domain = Domain(L_end=D, T=T_FINAL, Nx=Nx, Nt=Nt)
 
     sol_numerical_labels = [scheme.value for scheme in NumericalSchemes]
@@ -99,3 +99,7 @@ if __name__ == "__main__":
             sol_numerical_labels=sol_numerical_labels,
             title=title
         )
+
+
+if __name__ == "__main__":
+    main()

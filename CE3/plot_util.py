@@ -88,7 +88,7 @@ def plot_at_specified_time(
             numerical_sols,
             sol_numerical_labels):
         plt.plot(x, numerical, label=label,
-                 marker=next(markers), markersize=4, linewidth=0)
+                 marker=next(markers), markersize=3, linewidth=0.4)
     plt.grid()
     plt.xlabel('$x$', fontsize=14)
     plt.legend(fontsize=12)
@@ -158,7 +158,7 @@ def plot_multiple_discretisations(
         for sol_num, label in zip(sols_num, sol_num_labels):
             ax.plot(
                 x, sol_num,
-                label=label, marker=next(markers), markersize=4, linewidth=0
+                label=label, marker=next(markers), markersize=3, linewidth=0.4
             )
         ax.grid()
         ax.set_xlabel('$x$', fontsize=10)
