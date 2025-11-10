@@ -220,7 +220,7 @@ def plot_system_specified_time(
     for ax, var_name in zip(axes, var_names):
         ax.grid()
         ax.set_ylabel(var_name, fontsize=18, rotation=0, labelpad=15)
-        ax.set_ylim(bottom=0.008, top=-0.008)
+        ax.set_ylim(bottom=-0.008, top=0.008)
 
     axes[0].legend(fontsize=12)
     axes[1].set_xlabel('$x$', fontsize=18, labelpad=15)
