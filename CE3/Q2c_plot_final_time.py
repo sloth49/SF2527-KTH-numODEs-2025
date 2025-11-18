@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from solver_system import SolverSystem, NumericalSchemes
 from domain import Domain
 from plot_util import plot_system_specified_time, plot_system_3d
+import Q2b
 import os
 
 def run_task(task: str, Nx: int, Nt: int, plot_analytic=True):
@@ -59,6 +60,8 @@ def run_task(task: str, Nx: int, Nt: int, plot_analytic=True):
      # Plot solutions
      if task == 'plot_final':
           if plot_analytic:
+               # Calculate and save analytical solution
+               Q2b.main()
                # Load analytical solution
                script_dir = os.path.dirname(os.path.abspath(__file__))
                fname_analytic = os.path.join(script_dir, f'analytical_sol_Nx{Nx}_Nt{Nt}.npz')
