@@ -80,9 +80,10 @@ def main():
         solutions_numerical_all_BCs.append(solutions_numerical_thisBC)
     
     # === Plot analytical and numerical solutions for each BC type ===
+    Co = solver._Co
     plot_titles = [
-        f'$u(x,{T_FINAL:.15g})$ - sine wave BC',
-        f'$u(x,{T_FINAL:.15g})$ - square wave BC'
+        f'$u(x,{T_FINAL:.15g})$ - sine wave BC, $Co$: {Co:.2f}',
+        f'$u(x,{T_FINAL:.15g})$ - square wave BC, $Co$: {Co:.2f}'
     ]
     for (sol_analytical,
          sols_num,

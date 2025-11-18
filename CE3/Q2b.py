@@ -8,17 +8,18 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import quad, quad_vec, simpson
+from scipy.integrate import simpson
 from domain import Domain
 from plot_util import save2jpg
-
-
-def forcing_along_char(tau, x, t, char_speed, s, r):
-     csi = x - char_speed * (t - tau)
-     return s(csi) * r(tau)
+import os
 
 
 def forcing_integral(xn, tn, char_speed, s, r, t0=0, N=400):
+    """
+    Integrates the function
+          s(csi(tau)) * r(tau) * dtau
+    between tau = [t0, tn], using Simpson's rule
+    """
     if tn == 0:
         return 0.0
     tau = np.linspace(start=t0, stop=tn, num=N)
@@ -27,7 +28,7 @@ def forcing_integral(xn, tn, char_speed, s, r, t0=0, N=400):
     return simpson(y=integrand, x=tau)
 
 
-def main():
+def main(savefig = False):
      """
      Computes the analytical solution and saves results to file.
      The file is a dictionary-type archive, with 'arr_0', 'arr_1', ... keys
@@ -45,7 +46,7 @@ def main():
 
      # Domain discretisation
      Nx = 400
-     Nt = 200
+     Nt = 220
 
      # === Analytical solution in characteristic variables ===
      # Forcing function
@@ -89,13 +90,15 @@ def main():
      u, v = uv.reshape(2, len(x), len(t))         # back to (2, Nx, Nt)
 
      # Save computed analytical solution for future use
-     filename = f'CE3/analytical_sol_Nx{Nx}_Nt{Nt}'
+     os.makedirs('CE3/results', exist_ok=True)
+     filename = f'CE3/results/analytical_sol_Nx{Nx}_Nt{Nt}'
      np.savez(filename, u, v)
 
-     # Plot analytical solution
-     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 8))
-     for n, (un, vn) in enumerate(zip(u.T, v.T)):
-         save2jpg(u=un, v=vn, x=x, time_step=n, fig=fig, axes=axes)
+     # Save plots to figures to compose animation later
+     if savefig:
+          fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 8))
+          for n, (un, vn) in enumerate(zip(u.T, v.T)):
+               save2jpg(u=un, v=vn, x=x, time_step=n, fig=fig, axes=axes)
 
 
 if __name__ == "__main__":

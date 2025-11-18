@@ -12,21 +12,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def g(t, a):
-    x = np.cos(t)
-    y = a * np.sin(t)
-    return x, y
+def g(z, a):
+    gx = np.cos(z)
+    gy = a * np.sin(z)
+    return gx, gy
 
-t = np.linspace(0, 2*np.pi)
-a_vals = [0.5, 0.75, 1.0, 1.25, 1.5]
+z = np.linspace(0, 2*np.pi)
+Co_vals = [0.5, 0.75, 1.0, 1.25, 1.5]
 
 fig = plt.figure()
-for a in a_vals:
-    x, y = g(t, a)
-    if a ==1.0:
-        plt.plot(x, y, 'k--', label=f'$a$ = {a:.1f}')
+for Co in Co_vals:
+    gx, gy = g(z, Co)
+    if Co ==1.0:
+        plt.plot(gx, gy, 'k--', label=f'Co = {Co:.1f}')
     else:
-        plt.plot(x, y, label=f'$a$ = {a:.1f}')
+        plt.plot(gx, gy, label=f'Co = {Co:.1f}')
 plt.grid()
 plt.axis('equal')
 plt.legend()

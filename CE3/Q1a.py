@@ -19,7 +19,7 @@ def square_wave(t: float, tau: float):
     return signal.square(2 * np.pi * t / tau)
 
 
-def main(boundary_condition):
+def main(boundary_condition, plot_title):
     """
     Plot the analytical solution ton CE3 part 1, for square wave
     and sine wave boundary conditions
@@ -43,11 +43,15 @@ def main(boundary_condition):
 
     # calculate analytical solution
     u = np.zeros_like(X)
-    u = np.where((X < a * T), boundary_condition(t=(T - X / a), tau=TAU), 0) # type: ignore
+    u = np.where(
+        (X < a * T),
+        boundary_condition(t=(T - X / a), tau=TAU),
+        0
+    ) # type: ignore
 
     # === Plot results ===
     
-    # Downsample results to plot set time levels vs x
+    # Downsample results to plot solution at fixed time levels
     samples_number = 8
     sampling_step = (Nt + 1) // samples_number
     time_samples = t[::sampling_step]
@@ -66,9 +70,14 @@ def main(boundary_condition):
     ax.set_zlabel('$u$', fontsize=16, labelpad=10) # type: ignore
     ax.set_zlim(bottom=-2.0, top=2.0) # type: ignore
     ax.view_init(elev=25, azim=-140) # type: ignore
+    ax.set_title(plot_title, fontsize=16)
     plt.show()
 
 
 if __name__ == "__main__":
-    # main(square_wave)
-    main(sine_wave)
+    for bc_func, plot_title in zip(
+        [square_wave, sine_wave],
+        ['Analytical solution - square wave B.C.', 'Analytical solution - sine wave B.C.']
+    ):
+        main(bc_func, plot_title)
+
