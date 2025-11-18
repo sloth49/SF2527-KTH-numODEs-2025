@@ -90,8 +90,7 @@ def main(savefig = False):
      u, v = uv.reshape(2, len(x), len(t))         # back to (2, Nx, Nt)
 
      # Save computed analytical solution for future use
-     os.makedirs('CE3/results', exist_ok=True)
-     filename = f'CE3/results/analytical_sol_Nx{Nx}_Nt{Nt}'
+     filename = f'analytical_sol_Nx{Nx}_Nt{Nt}'
      np.savez(filename, u, v)
 
      # Save plots to figures to compose animation later

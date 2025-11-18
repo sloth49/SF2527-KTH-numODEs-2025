@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from solver_system import SolverSystem, NumericalSchemes
 from domain import Domain
 from plot_util import plot_system_specified_time, plot_system_3d
+import os
 
 def run_task(task: str, Nx: int, Nt: int, plot_analytic=True):
      # Problem parameters
@@ -59,7 +60,8 @@ def run_task(task: str, Nx: int, Nt: int, plot_analytic=True):
      if task == 'plot_final':
           if plot_analytic:
                # Load analytical solution
-               fname_analytic = f'CE3/results/analytical_sol_Nx{Nx}_Nt{Nt}.npz'
+               script_dir = os.path.dirname(os.path.abspath(__file__))
+               fname_analytic = os.path.join(script_dir, f'analytical_sol_Nx{Nx}_Nt{Nt}.npz')
                sol_analytical= np.load(fname_analytic)
                u, v = sol_analytical['arr_0'], sol_analytical['arr_1']
                sol_analytical = np.stack((u, v), axis=0)
