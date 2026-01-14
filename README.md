@@ -10,5 +10,13 @@ Python code for the courses' home assignments
 4. Finite difference approximation in 2D
 
 ## Assignment 2
-
+1. 1D diffusion equation (Explicit Euler method)
+2. 2D diffusion equation (Crank-Nicolson method)
+   
 ## Assignment 3
+1. 1D Advection equation
+   - Analytical solution (method of characteristics)
+   - Numerical solution (Upwind method)
+2. Shallow water (de Saint Venant) equations with forcing
+   -  Analytical solution
+   -  Numerical solution: Upwind, Lax-Friedrichs, Lax-Wendroff methods
